@@ -1,0 +1,11 @@
+# Borg backup wrapper scripts settings
+
+# override settings in borg.backup.settings with SUB_ prefix
+# valid for BACKUP_FILE, BACKUP_SET, COMPRESSION*, KEEP_*
+
+# set to 1 to dump all into one file instead of per database
+# note that with this databases that have been dropped need to be pruned manually
+# if 'schema' word is used, only schema data is dumped
+DATABASE_FULL_DUMP="";
+# db config (for older mysql setups without ident basedlogin)
+MYSQL_DB_CONFIG="";
