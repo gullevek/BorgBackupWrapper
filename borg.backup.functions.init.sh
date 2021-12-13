@@ -208,8 +208,10 @@ fi;
 if [ ! -w "${BASE_FOLDER}" ]; then
 	echo "Cannot write to BASE_FOLDER ${BASE_FOLDER}";
 	echo "Is the group set to 'backup' and is this group allowed to write?"
+	echo "If run as sudo, is this user in the 'backup' group?"
 	echo "chgrp -R backup ${BASE_FOLDER}";
-	echo "chmod -R g+rws ${BASE_FOLDER}";
+	echo "chmod -R g+rwX ${BASE_FOLDER}";
+	echo "chmod g+s ${BASE_FOLDER}";
 	exit 1;
 fi;
 
@@ -342,8 +344,10 @@ LOG="${LOG_FOLDER}/${BACKUP_FILE}.log";
 if [[ -f "${LOG}" && ! -w "${LOG}" ]] || [[ ! -f "${LOG}" && ! -w "${LOG_FOLDER}" ]]; then
 	echo "Log folder or log file is not writeable: ${LOG}";
 	echo "Is the group set to 'backup' and is this group allowed to write?"
+	echo "If run as sudo, is this user in the 'backup' group?"
 	echo "chgrp -R backup ${LOG}";
-	echo "chmod -R g+rws ${LOG}";
+	echo "chmod -R g+rwX ${LOG}";
+	echo "chmod g+s ${LOG}";
 	exit 1;
 fi;
 
