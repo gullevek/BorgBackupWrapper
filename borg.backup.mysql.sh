@@ -21,6 +21,7 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 INCLUDE_FILE="borg.backup.mysql.include";
 EXCLUDE_FILE="borg.backup.mysql.exclude";
 SCHEMA_ONLY_FILE="borg.backup.mysql.schema-only";
+# init check file
 BACKUP_INIT_CHECK="borg.backup.mysql.init";
 
 # check valid data

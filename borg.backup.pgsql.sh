@@ -22,6 +22,7 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 INCLUDE_FILE="borg.backup.pgsql.include";
 EXCLUDE_FILE="borg.backup.pgsql.exclude";
 SCHEMA_ONLY_FILE="borg.backup.pgsql.schema-only";
+# init check file
 BACKUP_INIT_CHECK="borg.backup.pgsql.init";
 
 # check valid data

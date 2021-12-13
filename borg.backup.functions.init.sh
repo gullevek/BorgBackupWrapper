@@ -94,6 +94,11 @@ DATABASE_USER="";
 # only for mysql old config file
 MYSQL_DB_CONFIG="";
 MYSQL_DB_CONFIG_PARAM="";
+# gitea module
+GIT_USER="";
+GITEA_TMP="";
+GITEA_BIN="";
+GITEA_CONFIG="";
 # default keep 7 days, 4 weeks, 6 months
 # if set 0, ignore
 # note that for last/hourly it is needed to create a different

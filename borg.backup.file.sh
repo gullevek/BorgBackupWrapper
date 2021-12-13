@@ -14,6 +14,7 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 # include and exclude file
 INCLUDE_FILE="borg.backup.file.include";
 EXCLUDE_FILE="borg.backup.file.exclude";
+# init check file
 BACKUP_INIT_CHECK="borg.backup.file.init";
 
 . "${DIR}/borg.backup.functions.check.sh";

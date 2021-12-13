@@ -1,0 +1,11 @@
+# Borg backup wrapper scripts settings: gitea
+
+# rename to borg.backup.gitea.settings to use
+
+# override settings in borg.backup.settings with SUB_ prefix
+# valid for BACKUP_FILE, BACKUP_SET, COMPRESSION*, KEEP_*
+
+GIT_USER="";
+GITEA_TMP="";
+GITEA_BIN="";
+GITEA_CONFIG="";
