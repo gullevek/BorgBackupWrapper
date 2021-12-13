@@ -16,6 +16,8 @@ BACKUP_INIT_CHECK="borg.backup.gitea.init";
 # if info print info and then abort run
 . "${DIR}/borg.backup.functions.info.sh";
 
+# NOTE: because a tmp directory is needed it is more recommended
+# to run this as root and have only the dump command itself run as GIT_USER
 # set git user
 if [ -z "${GIT_USER}" ]; then
 	GIT_USER="git";
@@ -58,6 +60,8 @@ if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 fi;
 if [ ${DRYRUN} -eq 0 ]; then
 	(
+		# below was an old workaround
+		#export USER="${LOGNAME}" # workaround for broken gitea EUID check
 		# make sure temp folder is there and is set as git. user
 		if [ ! -d "${GITEA_TMP}" ]; then
 			mkdir -p "${GITEA_TMP}";
