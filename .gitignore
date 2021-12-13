@@ -1,0 +1,8 @@
+.cache/
+.config/
+borg.backup.settings
+borg.backup.*.settings
+borg.backup.*.include
+borg.backup.*.exclude
+borg.backup.*.schema-only
+borg.backup.*.init

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ ${INFO} -eq 1 ]; then
-	echo "--- [INFO  : $(date +'%F %T')] ------------------------------------------->";
+	echo "--- [INFO  : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	# show command on debug or dry run
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";borg info ${OPT_REMOTE} ${REPOSITORY}";

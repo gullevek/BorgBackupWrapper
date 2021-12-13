@@ -47,6 +47,11 @@ PRINT=0;
 # flags, set to no to disable
 _BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK="yes";
 _BORG_RELOCATED_REPO_ACCESS_IS_OK="yes";
+# compatible settings
+# NOTE: to keep the old .borg repository name for file module set this to true
+# if set to false (future) it will add -file to the repository name like for other
+# modules
+FILE_REPOSITORY_COMPATIBLE="true";
 # other variables
 TARGET_SERVER="";
 REGEX="";
@@ -81,7 +86,6 @@ SUB_COMPRESSION_LEVEL="";
 ENCRYPTION="none";
 # force check always
 FORCE_CHECK="false";
-DATE=""; # to be deprecated
 BACKUP_SET="";
 SUB_BACKUP_SET="";
 # for database backup only
@@ -245,8 +249,6 @@ if [ -f "${BASE_FOLDER}${SETTINGS_FILE_SUB}" ]; then
 	if [ ! -z "${SUB_BACKUP_FILE}" ]; then
 		BACKUP_FILE=${SUB_BACKUP_FILE}
 	fi;
-	# add module name to backup file, always
-	BACKUP_FILE=${BACKUP_FILE/.borg/-${MODULE,,}.borg};
 	# if sub backup set it set, override current
 	if [ ! -z "${SUB_BACKUP_SET}" ]; then
 		BACKUP_SET=${SUB_BACKUP_SET};
@@ -280,6 +282,11 @@ if [ -f "${BASE_FOLDER}${SETTINGS_FILE_SUB}" ]; then
 	if [ ! -z "${SUB_KEEP_WITHIN}" ]; then
 		KEEP_WITHIN=${SUB_KEEP_WITHIN};
 	fi;
+fi;
+# add module name to backup file, always
+# except if FILE module and FILE_REPOSITORY_COMPATIBLE="true"
+if ([ "${FILE_REPOSITORY_COMPATIBLE}" = "false" ] && [ "${MODULE,,}" = "file" ]) || [ "${MODULE,,}" != "file" ]; then
+	BACKUP_FILE=${BACKUP_FILE/.borg/-${MODULE,,}.borg};
 fi;
 # backup file must be set
 if [ -z "${BACKUP_FILE}" ]; then

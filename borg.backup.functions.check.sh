@@ -177,16 +177,9 @@ if [ -z "${KEEP_OPTIONS}" ]; then
 	echo "[! $(date +'%F %T')] It seems no KEEP_* entries where set in a valid format.";
 	exit 1;
 fi;
-# set BACKUP_SET if empty, check for for DATE is set
+# set BACKUP_SET if empty, set to Year-month-day
 if [ -z "${BACKUP_SET}" ]; then
-	# DATE is deprecated and will be removed
-	if [ ! -z "${DATE}" ]; then
-		echo "[!] DEPRECATED: The use of DATE variable is deprecated, use BACKUP_SET instead";
-		BACKUP_SET="${DATE}";
-	else
-		# default
-		BACKUP_SET="{now:%Y-%m-%d}";
-	fi;
+	BACKUP_SET="{now:%Y-%m-%d}";
 fi;
 # backup set check, and there is no hour entry (%H) in the archive string
 # we add T%H:%M:%S in this case, before the last }
@@ -222,7 +215,7 @@ COMMAND_INFO="${COMMAND_EXPORT}borg info ${OPT_REMOTE} ${REPOSITORY}";
 # else a normal check is ok
 # unless explicit given, check is skipped
 if [ ${CHECK} -eq 1 ] || [ ${INIT} -eq 1 ]; then
-	echo "--- [CHECK : $(date +'%F %T')] ------------------------------------------->";
+	echo "--- [CHECK : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	if [ ! -z "${TARGET_SERVER}" ]; then
 		if [ ${DEBUG} -eq 1 ]; then
 			echo "borg info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
@@ -259,7 +252,7 @@ if [ ${CHECK} -eq 1 ] || [ ${INIT} -eq 1 ]; then
 	fi;
 fi;
 if [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
-	echo "--- [INIT  : $(date +'%F %T')] ------------------------------------------->";
+	echo "--- [INIT  : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 		echo "borg init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY}";
 	fi
@@ -291,7 +284,7 @@ fi;
 
 # PRINT OUT current data, only do this if REPO exists
 if [ ${PRINT} -eq 1 ]; then
-	echo "--- [PRINT : $(date +'%F %T')] ------------------------------------------->";
+	echo "--- [PRINT : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	FORMAT="{archive} {comment:6} {start} - {end} [{id}] ({username}@{hostname}){NL}"
 	# show command on debug or dry run
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then

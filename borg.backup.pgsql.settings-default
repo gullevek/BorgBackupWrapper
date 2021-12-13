@@ -1,4 +1,6 @@
-# Borg backup wrapper scripts settings
+# Borg backup wrapper scripts settings: PostgreSQL
+
+# rename to borg.backup.pgsql.settings to use
 
 # override settings in borg.backup.settings with SUB_ prefix
 # valid for BACKUP_FILE, BACKUP_SET, COMPRESSION*, KEEP_*

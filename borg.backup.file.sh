@@ -5,7 +5,7 @@
 
 # set last edit date + time
 MODULE="file";
-MODULE_VERSION="0.1.0";
+MODULE_VERSION="1.0.0";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -23,6 +23,7 @@ if [ ! -f "${BASE_FOLDER}${INCLUDE_FILE}" ]; then
 	echo "[! $(date +'%F %T')] The include folder file ${INCLUDE_FILE} is missing";
 	exit 1;
 fi;
+echo "--- [INCLUDE: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 # folders to backup
 FOLDERS=();
 # this if for debug output with quoted folders
@@ -87,6 +88,7 @@ done<"${BASE_FOLDER}${INCLUDE_FILE}";
 
 # exclude list
 if [ -f "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
+	echo "--- [EXCLUDE: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	# check that the folders in that exclude file are actually valid,
 	# remove non valid ones and warn
 	#TMP_EXCLUDE_FILE=$(mktemp --tmpdir ${EXCLUDE_FILE}.XXXXXXXX); # non mac
@@ -152,7 +154,7 @@ COMMAND=${COMMAND}${REPOSITORY}::${BACKUP_SET};
 . "${DIR}/borg.backup.functions.info.sh";
 
 if [ $FOLDER_OK -eq 1 ]; then
-	echo "--- [BACKUP: $(date +'%F %T')] ------------------------------------------->";
+	echo "--- [BACKUP: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	# show command
 	if [ ${DEBUG} -eq 1 ]; then
 		echo $(echo ${COMMAND} | sed -e 's/[ ][ ]*/ /g') ${FOLDERS_Q[*]};
@@ -173,7 +175,7 @@ else
 fi;
 
 # clean up, always verbose
-echo "--- [PRUNE : $(date +'%F %T')] ------------------------------------------->";
+echo "--- [PRUNE : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 # build command
 COMMAND="borg prune ${OPT_REMOTE} -v -s --list ${PRUNE_DEBUG} ${KEEP_OPTIONS[*]} ${REPOSITORY}";
 echo "Prune repository with keep${KEEP_INFO:1}";
