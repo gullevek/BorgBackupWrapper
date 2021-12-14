@@ -107,8 +107,8 @@ ZABBIX_UNKNOWN_TABLES="";
 OPT_ZABBIX_DUMP="";
 OPT_ZABBIX_CONFIG="";
 OPT_ZABBIX_UNKNOWN_TABLES="";
-# default keep 7 days, 4 weeks, 6 months
-# if set 0, ignore
+# default keep 7 days, 4 weeks, 6 months, 1 year
+# if set 0, ignore/off
 # note that for last/hourly it is needed to create a different
 # BACKUP SET that includes hour and minute information
 # IF BACKUP_SET is empty, this is automatically added
@@ -406,7 +406,7 @@ function convert_time
 			time_string=${time_string}${output[$i]}${timenames[$i]};
 		fi;
 	done;
-	if [ ! -z ${ms} ] && [ "${ms}" != "nan" ]; && [ ${ms} -gt 0 ]; then
+	if [ ! -z ${ms} ] && [ "${ms}" != "nan" ] && [ ${ms} -gt 0 ]; then
 		time_string=${time_string}" "${ms}"ms";
 	fi;
 	# just in case the time is 0
