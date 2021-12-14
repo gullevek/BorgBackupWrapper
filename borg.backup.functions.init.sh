@@ -99,6 +99,14 @@ GIT_USER="";
 GITEA_TMP="";
 GITEA_BIN="";
 GITEA_CONFIG="";
+# zabbix module
+ZABBIX_DUMP_BIN="";
+ZABBIX_CONFIG="";
+ZABBIX_DATABASE="";
+ZABBIX_UNKNOWN_TABLES="";
+OPT_ZABBIX_DUMP="";
+OPT_ZABBIX_CONFIG="";
+OPT_ZABBIX_UNKNOWN_TABLES="";
 # default keep 7 days, 4 weeks, 6 months
 # if set 0, ignore
 # note that for last/hourly it is needed to create a different
@@ -398,7 +406,7 @@ function convert_time
 			time_string=${time_string}${output[$i]}${timenames[$i]};
 		fi;
 	done;
-	if [ ! -z ${ms} ] && [ ${ms} -gt 0 ]; then
+	if [ ! -z ${ms} ] && [ "${ms}" != "nan" ]; && [ ${ms} -gt 0 ]; then
 		time_string=${time_string}" "${ms}"ms";
 	fi;
 	# just in case the time is 0

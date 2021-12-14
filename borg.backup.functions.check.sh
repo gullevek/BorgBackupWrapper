@@ -194,6 +194,12 @@ IFS="#";
 if [ "${MODULE}" != "file" ]; then
 	IFS=${_IFS};
 fi;
+
+# borg call, replace ##...## parts during run
+# used in all modules, except 'file'
+_BORG_CALL="borg create ${OPT_REMOTE} -v ${OPT_LIST} ${OPT_PROGRESS} ${OPT_COMPRESSION} -s --stdin-name ##FILENAME## ${REPOSITORY}::##BACKUP_SET## -";
+_BORG_PRUNE="borg prune ${OPT_REMOTE} -v -s --list ${PRUNE_DEBUG} -P ##BACKUP_SET_PREFIX## ${KEEP_OPTIONS[*]} ${REPOSITORY}";
+
 # general borg settings
 # set base path to config directory to keep cache/config separated
 export BORG_BASE_DIR="${BASE_FOLDER}";

@@ -81,10 +81,6 @@ NOLOCKS="--single-transaction"
 EVENTDB="mysql"
 EVENTS="--events"
 
-# borg call, replace ##...## parts
-_BORG_CALL="borg create ${OPT_REMOTE} -v ${OPT_LIST} ${OPT_PROGRESS} ${OPT_COMPRESSION} -s --stdin-name ##FILENAME## ${REPOSITORY}::##BACKUP_SET## -";
-_BORG_PRUNE="borg prune ${OPT_REMOTE} -v -s --list ${PRUNE_DEBUG} -P ##BACKUP_SET_PREFIX## ${KEEP_OPTIONS[*]} ${REPOSITORY}";
-
 # ALL IN ONE FILE or PER DATABASE FLAG
 if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 	SCHEMA_ONLY='';

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 MODULE="gitea"
-MODULE_VERSION="0.1.0";
+MODULE_VERSION="1.0.0";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -48,8 +48,8 @@ BACKUP_SET_NAME="gitea-${BACKUP_SET}";
 BACKUP_SET_PREFIX="gitea-";
 
 # borg call, replace ##...## parts
-_BORG_CALL="borg create ${OPT_REMOTE} -v ${OPT_LIST} ${OPT_PROGRESS} ${OPT_COMPRESSION} -s --stdin-name ##FILENAME## ${REPOSITORY}::##BACKUP_SET## -";
-_BORG_PRUNE="borg prune ${OPT_REMOTE} -v -s --list ${PRUNE_DEBUG} -P ##BACKUP_SET_PREFIX## ${KEEP_OPTIONS[*]} ${REPOSITORY}";
+# _BORG_CALL="borg create ${OPT_REMOTE} -v ${OPT_LIST} ${OPT_PROGRESS} ${OPT_COMPRESSION} -s --stdin-name ##FILENAME## ${REPOSITORY}::##BACKUP_SET## -";
+# _BORG_PRUNE="borg prune ${OPT_REMOTE} -v -s --list ${PRUNE_DEBUG} -P ##BACKUP_SET_PREFIX## ${KEEP_OPTIONS[*]} ${REPOSITORY}";
 # borg call
 BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s|##REPOSITORY##|${REPOSITORY}|" | sed -e "s/##BACKUP_SET##/${BACKUP_SET}/");
 BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s|##REPOSITORY##|${REPOSITORY}|" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");

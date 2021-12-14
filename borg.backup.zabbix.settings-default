@@ -1,0 +1,17 @@
+# Borg backup wrapper scripts settings: gitea
+
+# rename to borg.backup.gitea.settings to use
+
+# override settings in borg.backup.settings with SUB_ prefix
+# valid for BACKUP_FILE, BACKUP_SET, COMPRESSION*, KEEP_*
+
+# location for the zabbix dump script
+# Source: https://github.com/npotorino/zabbix-backup
+# if not set use /usr/local/bin
+ZABBIX_DUMP="";
+# either psql or mysql, must be set
+ZABBIX_DATABASE="";
+# config location (default /etc/zabbiz/zabbix_server.conf)
+ZABBIX_CONFIG="";
+# unknown tables, default ignore, is set to true, will force backup them
+ZABBIX_UNKNOWN_TABLES="";
