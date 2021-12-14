@@ -30,7 +30,7 @@ fi;
 if [ "${ZABBIX_DATABASE}" = "psql" ]; then
 	OPT_ZABBIX_DUMP="-C";
 fi;
-if [ "${ZABBIX_DATABASE}" != 'psql' ] || [ "${ZABBIX_DATABASE}" != "mysql" ]; then
+if [ "${ZABBIX_DATABASE}" != "psql" ] && [ "${ZABBIX_DATABASE}" != "mysql" ]; then
 	echo "[! $(date +'%F %T')] Zabbix dump must have database set to either psql or mysql";
 	exit 1;
 fi;
