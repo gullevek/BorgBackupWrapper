@@ -36,8 +36,8 @@ if [ "${ZABBIX_DATABASE}" != "psql" ] && [ "${ZABBIX_DATABASE}" != "mysql" ]; th
 	echo "[! $(date +'%F %T')] Zabbix dump must have database set to either psql or mysql";
 	exit 1;
 fi;
-if [ ! -f "${ZABBIX_DUMP}" ]; then
-	echo "[! $(date +'%F %T')] Zabbix dump script could not be found: ${ZABBIX_DUMP}";
+if [ ! -f "${ZABBIX_DUMP_BIN}" ]; then
+	echo "[! $(date +'%F %T')] Zabbix dump script could not be found: ${ZABBIX_DUMP_BIN}";
 	exit 1;
 fi;
 # -i (ignore)/ -f (backup)
@@ -54,8 +54,8 @@ BACKUP_SET="zabbix-settings-${BACKUP_SET}";
 BACKUP_SET_PREFIX="zabbix-settings-";
 
 # borg call
-BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s|##REPOSITORY##|${REPOSITORY}|" | sed -e "s/##BACKUP_SET##/${BACKUP_SET}/");
-BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s|##REPOSITORY##|${REPOSITORY}|" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
+BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET}/");
+BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
 # if prefix is emtpy remote "-P"
 if [ -z "${BACKUP_SET_PREFIX}" ]; then
 	BORG_PRUNE=$(echo "${BORG_PRUNE}" | sed -e 's/-P //');

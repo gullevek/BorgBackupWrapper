@@ -8,7 +8,7 @@
 # location for the zabbix dump script
 # Source: https://github.com/npotorino/zabbix-backup
 # if not set use /usr/local/bin
-ZABBIX_DUMP="";
+ZABBIX_DUMP_BIN="";
 # either psql or mysql, must be set
 ZABBIX_DATABASE="";
 # config location (default /etc/zabbiz/zabbix_server.conf)
