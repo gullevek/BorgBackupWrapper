@@ -288,11 +288,11 @@ if [ -f "${BASE_FOLDER}${SETTINGS_FILE_SUB}" ]; then
 	if [ ! -z "${SUB_KEEP_WEEKS}" ]; then
 		KEEP_WEEKS=${SUB_KEEP_WEEKS};
 	fi;
+	if [ ! -z "${SUB_KEEP_MONTHS}" ]; then
+		KEEP_MONTHS=${SUB_KEEP_MONTHS};
+	fi;
 	if [ ! -z "${SUB_KEEP_YEARS}" ]; then
 		KEEP_YEARS=${SUB_KEEP_YEARS};
-	fi;
-	if [ ! -z "${SUB_KEEP_LAST}" ]; then
-		KEEP_LAST=${SUB_KEEP_LAST};
 	fi;
 	if [ ! -z "${SUB_KEEP_WITHIN}" ]; then
 		KEEP_WITHIN=${SUB_KEEP_WITHIN};
