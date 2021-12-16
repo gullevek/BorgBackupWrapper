@@ -55,7 +55,7 @@ if [ ! -f "${PG_BASE_PATH}${_PATH_PG_VERSION}/bin/psql" ]; then
 	PG_BASE_PATH='/usr/pgsql-';
 	if [ ! -f "${PG_BASE_PATH}${_PATH_PG_VERSION}/bin/psql" ]; then
 		PG_BASE_PATH='/usr/lib64/pgsql';
-		_PATH_PG_VERSION=$(echo "${PG_VERSION}" | sed -e 's/\.//'):
+		_PATH_PG_VERSION=$(echo "${PG_VERSION}" | sed -e 's/\.//');
 		if [ ! -f "${PG_BASE_PATH}${_PATH_PG_VERSION}/bin/psql" ]; then
 			echo "[! $(date +'%F %T')] PostgreSQL not found in any paths";
 			exit 1;
