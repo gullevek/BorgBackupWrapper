@@ -94,8 +94,8 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 	# Filename
 	FILENAME="all-${schema_flag}-${DB_TYPE}_${DB_VERSION}_${DB_HOST}_${DB_PORT}.sql"
 	# backup set:
-	BACKUP_SET_NAME="all-${schema_flag}-${BACKUP_SET}";
 	BACKUP_SET_PREFIX="all-";
+	BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
 	# borg call
 	BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 	BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
@@ -174,8 +174,8 @@ else
 			# prepare borg calls
 			FILENAME="${db}-${schema_flag}-${DB_TYPE}_${DB_VERSION}_${DB_HOST}_${DB_PORT}.sql"
 			# backup set:
-			BACKUP_SET_NAME="${db}-${schema_flag}-${BACKUP_SET}";
 			BACKUP_SET_PREFIX="${db}-"
+			BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
 			# borg call
 			BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 			BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");

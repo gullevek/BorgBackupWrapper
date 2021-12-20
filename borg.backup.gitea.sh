@@ -44,13 +44,11 @@ fi;
 # Filename
 FILENAME="gitea.backup.zip";
 # backup set and prefix
-BACKUP_SET_NAME="gitea-${BACKUP_SET}";
 BACKUP_SET_PREFIX="gitea-";
+BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${BACKUP_SET}";
 
 # borg call
-# BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s|##REPOSITORY##|${REPOSITORY}|" | sed -e "s/##BACKUP_SET##/${BACKUP_SET}/");
-BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET}/");
-# BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s|##REPOSITORY##|${REPOSITORY}|" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
+BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
 echo "--- [git data and database: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
@@ -69,7 +67,7 @@ if [ ${DRYRUN} -eq 0 ]; then
 		# this needs to be run in a folder that can be stat by git user
 		cd "${GITEA_TMP}";
 		sudo -u ${GIT_USER} ${GITEA_BIN} dump -c ${GITEA_CONFIG} -w ${GITEA_TMP} -L -f - | ${BORG_CALL};
-	)
+	) | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' # remove all ESC strings
 fi;
 echo "Prune repository with keep${KEEP_INFO:1}";
 ${BORG_PRUNE};

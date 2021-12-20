@@ -50,11 +50,11 @@ fi;
 # Filename
 FILENAME="zabbix-config.c.sql";
 # backup set:
-BACKUP_SET="zabbix-settings-${BACKUP_SET}";
 BACKUP_SET_PREFIX="zabbix-settings-";
+BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${BACKUP_SET}";
 
 # borg call
-BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET}/");
+BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
 # if prefix is emtpy remote "-P"
 if [ -z "${BACKUP_SET_PREFIX}" ]; then
