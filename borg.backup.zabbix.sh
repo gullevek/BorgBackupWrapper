@@ -3,7 +3,7 @@
 # Backup zabbix config and settings only
 
 MODULE="zabbix"
-MODULE_VERSION="1.0.0";
+MODULE_VERSION="1.0.1";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi

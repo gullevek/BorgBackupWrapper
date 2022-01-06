@@ -15,7 +15,7 @@ cleanup() {
 trap "unset BORG_BASE_DIR BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK BORG_RELOCATED_REPO_ACCESS_IS_OK" EXIT;
 
 # version for all general files
-VERSION="3.0.0";
+VERSION="3.0.2";
 
 # default log folder if none are set in config or option
 _LOG_FOLDER="/var/log/borg.backup/";
