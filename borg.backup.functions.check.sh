@@ -77,6 +77,7 @@ REPOSITORY="${TARGET_SERVER}${TARGET_FOLDER}${BACKUP_FILE}";
 echo "Repository    : ${REPOSITORY}";
 
 # check compression if given is valid and check compression level is valid if given
+OPT_COMPRESSION='';
 if [ ! -z "${COMPRESSION}" ]; then
 	# valid compression
 	if [ "${COMPRESSION}" = "lz4" ] || [ "${COMPRESSION}" = "zlib" ] || [ "${COMPRESSION}" = "lzma" ] || [ "${COMPRESSION}" = "zstd" ]; then
