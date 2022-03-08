@@ -35,6 +35,18 @@ eg:
 
 If `FILE_REPOSITORY_COMPATIBLE` is set to `false` in the borg.backup.file.settings then the file borg name will have `-file` added too. Currently this is not added to stay compatible with older scripts
 
+All below have default values if not set in the main settings file
+ * COMPRESSION: zstd
+ * COMPRESSION_LEVEL: 3
+ * ENCRYPTION: none
+ * FORCE_CHECK: false
+ * KEEP_LAST: 0
+ * KEEP_HOURS: 0
+ * KEEP_DAYS: 7
+ * KEEP_WEEKS: 4
+ * KEEP_MONTHS: 6
+ * KEEP_YEARS: 1
+
 All module settings files can have the following prefixed with `SUB_` to override master settings:
  * SUB_BACKUP_FILE
  * SUB_COMPRESSION

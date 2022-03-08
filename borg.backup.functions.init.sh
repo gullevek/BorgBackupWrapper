@@ -78,14 +78,18 @@ TARGET_FOLDER="";
 BACKUP_FILE="";
 SUB_BACKUP_FILE="";
 # lz4, zstd 1-22 (3), zlib 0-9 (6), lzma 0-9 (6)
-COMPRESSION="zstd";
-COMPRESSION_LEVEL=3;
+DEFAULT_COMPRESSION="zstd";
+DEFAULT_COMPRESSION_LEVEL=3;
+COMPRESSION="";
+COMPRESSION_LEVEL="";
 SUB_COMPRESSION="";
 SUB_COMPRESSION_LEVEL="";
 # encryption settings
-ENCRYPTION="none";
+DEFAULT_ENCRYPTION="none";
+ENCRYPTION="";
 # force check always
-FORCE_CHECK="false";
+DEFAULT_FORCE_CHECK="false";
+FORCE_CHECK="";
 BACKUP_SET="";
 SUB_BACKUP_SET="";
 # for database backup only
@@ -113,12 +117,18 @@ OPT_ZABBIX_UNKNOWN_TABLES="";
 # BACKUP SET that includes hour and minute information
 # IF BACKUP_SET is empty, this is automatically added
 # general keep last, if only this is set only last n will be kept
-KEEP_LAST=0;
-KEEP_HOURS=0;
-KEEP_DAYS=7;
-KEEP_WEEKS=4;
-KEEP_MONTHS=6;
-KEEP_YEARS=1;
+DEFAULT_KEEP_LAST=0;
+DEFAULT_KEEP_HOURS=0;
+DEFAULT_KEEP_DAYS=7;
+DEFAULT_KEEP_WEEKS=4;
+DEFAULT_KEEP_MONTHS=6;
+DEFAULT_KEEP_YEARS=1;
+KEEP_LAST="";
+KEEP_HOURS="";
+KEEP_DAYS="";
+KEEP_WEEKS="";
+KEEP_MONTHS="";
+KEEP_YEARS="";
 # in the format of nY|M|d|h|m|s
 KEEP_WITHIN="";
 # sub override init to empty
@@ -254,6 +264,37 @@ fi;
 
 # read config file
 . "${BASE_FOLDER}${SETTINGS_FILE}";
+# load default settings for fileds not set
+if [ -z "${COMPRESSION}" ]; then
+	COMPRESSION="${DEFAULT_COMPRESSION}";
+fi;
+if [ -z "${COMPRESSION_LEVEL}" ]; then
+	COMPRESSION_LEVEL="${DEFAULT_COMPRESSION_LEVEL}";
+fi;
+if [ -z "${ENCRYPTION}" ]; then
+	ENCRYPTION="${DEFAULT_ENCRYPTION}";
+fi;
+if [ -z "${FORCE_CHECK}" ]; then
+	FORCE_CHECK="${DEFAULT_FORCE_CHECK}";
+fi;
+if [ -z "${KEEP_LAST}" ]; then
+	KEEP_LAST="${DEFAULT_KEEP_LAST}";
+fi;
+if [ -z "${KEEP_HOURS}" ]; then
+	KEEP_HOURS="${DEFAULT_KEEP_HOURS}";
+fi;
+if [ -z "${KEEP_DAYS}" ]; then
+	KEEP_DAYS="${DEFAULT_KEEP_DAYS}";
+fi;
+if [ -z "${KEEP_WEEKS}" ]; then
+	KEEP_WEEKS="${DEFAULT_KEEP_WEEKS}";
+fi;
+if [ -z "${KEEP_MONTHS}" ]; then
+	KEEP_MONTHS="${DEFAULT_KEEP_MONTHS}";
+fi;
+if [ -z "${KEEP_YEARS}" ]; then
+	KEEP_YEARS="${DEFAULT_KEEP_YEARS}";
+fi;
 # ** SUB LOAD
 # a settings file always end in .settings, replace that with lower case MODULE.settings
 SETTINGS_FILE_SUB=$(echo "${SETTINGS_FILE}" | sed -e "s/\.settings/\.${MODULE,,}\.settings/");
@@ -365,11 +406,13 @@ if [[ -f "${LOG}" && ! -w "${LOG}" ]] || [[ ! -f "${LOG}" && ! -w "${LOG_FOLDER}
 fi;
 
 # if ENCRYPTION is empty or not in the valid list fall back to none
-if [ -z "${ENCRYPTION}" ]; then
-	ENCRYPTION="none";
+# NOTE This is currently set in default and doesn't need to be set on empty
+# only ivalid should be checked
+#if [ -z "${ENCRYPTION}" ]; then
+#	ENCRYPTION="none";
 #else
 	# TODO check for invalid encryption string
-fi;
+#fi;
 
 ## FUNCTIONS
 
