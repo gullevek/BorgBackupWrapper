@@ -86,6 +86,14 @@ for MODULE in ${MODULE_LIST}; do
 	fi;
 	# we dont allow special characters, so we don't need to special escape it
 	REPOSITORY="${TARGET_SERVER}${TARGET_FOLDER}${BACKUP_FILE}";
+	# set sudo prefix for postgres so the cache folder stays the same
+	# if run as root then the foloders below have to have the user set to postgres again
+	# .config/borg/security/<postgresql repo id>
+	# .cache/borg/<postgresql repo id>
+	CMD_PREFIX="";
+	if [ "${MODULE}" = "pgsql" ]; then
+		CMD_PREFIX="sudo -u postgres ";
+	fi;
 	echo "==== REPOSITORY: ${REPOSITORY}";
 	borg list --format '{archive}{NL}' ${REPOSITORY}|grep -v "${MODULE},"|
 	while read i; do
@@ -99,10 +107,10 @@ for MODULE in ${MODULE_LIST}; do
 		fi;
 		echo "- Rename from: ${i} to: ${target_name}";
 		if [ ${DEBUG} -eq 1 ]; then
-			echo "borg rename -p -v ${REPOSITORY}::${i} ${target_name}";
+			echo "${CMD_PREFIX}borg rename -p -v ${REPOSITORY}::${i} ${target_name}";
 		fi;
 		if [ ${DRYRUN} -eq 0 ]; then
-			borg rename -p -v ${REPOSITORY}::${i} ${target_name};
+			${CMD_PREFIX}borg rename -p -v ${REPOSITORY}::${i} ${target_name};
 		fi;
 	done;
 done;
