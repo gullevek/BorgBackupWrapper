@@ -11,6 +11,8 @@
 # debug and dry run
 DEBUG=0;
 DRYRUN=0;
+# options
+OPT_REMOTE="";
 # basic settings needed
 TARGET_USER="";
 TARGET_HOST="";
@@ -59,6 +61,9 @@ if [ ! -f "${BASE_FOLDER}${SETTINGS_FILE}" ]; then
 fi;
 . "${BASE_FOLDER}${SETTINGS_FILE}";
 
+if [ ! -z "${TARGET_BORG_PATH}" ]; then
+	OPT_REMOTE="--remote-path="$(printf "%q" "${TARGET_BORG_PATH}");
+fi;
 export BORG_BASE_DIR="${BASE_FOLDER}";
 export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK="yes";
 export BORG_RELOCATED_REPO_ACCESS_IS_OK="yes";
@@ -107,10 +112,10 @@ for MODULE in ${MODULE_LIST}; do
 		fi;
 		echo "- Rename from: ${i} to: ${target_name}";
 		if [ ${DEBUG} -eq 1 ]; then
-			echo "${CMD_PREFIX}borg rename -p -v ${REPOSITORY}::${i} ${target_name}";
+			echo "${CMD_PREFIX}borg rename ${OPT_REMOTE} -p -v ${REPOSITORY}::${i} ${target_name}";
 		fi;
 		if [ ${DRYRUN} -eq 0 ]; then
-			${CMD_PREFIX}borg rename -p -v ${REPOSITORY}::${i} ${target_name};
+			${CMD_PREFIX}borg rename ${OPT_REMOTE} -p -v ${REPOSITORY}::${i} ${target_name};
 		fi;
 	done;
 done;
