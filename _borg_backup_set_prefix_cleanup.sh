@@ -25,7 +25,7 @@ MODULE_LIST="file gitea mysql pgsql zabbix"
 while getopts ":c:nd" opt; do
 	case "${opt}" in
 		c|config)
-			BASE_FOLDER=${OPTARG};
+			BASE_FOLDER=${OPTARG}"/";
 			;;
 		d|debug)
 			DEBUG=1;
@@ -44,25 +44,22 @@ while getopts ":c:nd" opt; do
 	esac;
 done;
 
-
+[[ "${BASE_FOLDER}" != */ ]] && BASE_FOLDER=${BASE_FOLDER}"/";
 if [ ! -d "${BASE_FOLDER}" ]; then
 	echo "Base folder not found: ${BASE_FOLDER}";
 	exit 1;
 fi;
 SETTINGS_FILE="borg.backup.settings";
-
+if [ ! -f "${BASE_FOLDER}${SETTINGS_FILE}" ]; then
+	echo "Could not find: ${BASE_FOLDER}${SETTINGS_FILE}";
+	exit;
+fi;
 . "${BASE_FOLDER}${SETTINGS_FILE}";
 ORIG_BACKUPFILE=${BACKUP_FILE};
 for MODULE in ${MODULE_LIST}; do
 	echo "************* MODULE: ${MODULE}";
 	BACKUP_FILE=${ORIG_BACKUPFILE};
-	# if [ -f "${BASE_FOLDER}${SETTINGS_FILE_SUB}" ]; then
-	# 	. "${BASE_FOLDER}${SETTINGS_FILE_SUB}";
-	# fi;
-	# SETTINGS_FILE_SUB=$(echo "${SETTINGS_FILE}" | sed -e "s/\.settings/\.${MODULE,,}\.settings/");
-	if [ "${MODULE,,}" != "file" ]; then
-		BACKUP_FILE=${BACKUP_FILE/.borg/-${MODULE,,}.borg};
-	fi;
+	BACKUP_FILE=${BACKUP_FILE/.borg/-${MODULE,,}.borg};
 	TARGET_FOLDER=${TARGET_FOLDER%/}
 	TARGET_FOLDER=${TARGET_FOLDER#/}
 	# and add slash front and back and escape the path
