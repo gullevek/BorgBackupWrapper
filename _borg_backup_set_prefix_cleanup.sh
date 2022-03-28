@@ -100,7 +100,7 @@ for MODULE in ${MODULE_LIST}; do
 		CMD_PREFIX="sudo -u postgres ";
 	fi;
 	echo "==== REPOSITORY: ${REPOSITORY}";
-	borg list --format '{archive}{NL}' ${REPOSITORY}|grep -v "${MODULE},"|
+	borg list ${OPT_REMOTE} --format '{archive}{NL}' ${REPOSITORY}|grep -v "${MODULE},"|
 	while read i; do
 		# for gitea, zabbix we do not ADD we RENAME
 		if [ "${MODILE}" = "gitea" ]; then
