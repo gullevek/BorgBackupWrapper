@@ -304,7 +304,7 @@ fi;
 # PRINT OUT current data, only do this if REPO exists
 if [ ${PRINT} -eq 1 ]; then
 	echo "--- [PRINT : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
-	FORMAT="{archive} {comment:6} {start} - {end} [{id}] ({username}@{hostname}){NL}"
+	FORMAT="{archive:<45} {comment:6} {start} - {end} [{id}] ({username}@{hostname}){NL}"
 	# show command on debug or dry run
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} list ${OPT_REMOTE} --format ${FORMAT} ${REPOSITORY}";
