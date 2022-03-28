@@ -10,7 +10,7 @@
 
 # set last edit date + time
 MODULE="pgsql"
-MODULE_VERSION="1.0.1";
+MODULE_VERSION="1.1.1";
 
 
 DIR="${BASH_SOURCE%/*}"
@@ -43,6 +43,7 @@ _PATH_PG_VERSION=${PG_VERSION};
 _backup_error=$?;
 if [ $_backup_error -ne 0 ] || [ -z "${PG_VERSION}" ]; then
 	echo "[! $(date +'%F %T')] Cannot get PostgreSQL server version: ${_backup_error}";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit $_backup_error;
 fi;
 
@@ -58,6 +59,7 @@ if [ ! -f "${PG_BASE_PATH}${_PATH_PG_VERSION}/bin/psql" ]; then
 		_PATH_PG_VERSION=$(echo "${PG_VERSION}" | sed -e 's/\.//');
 		if [ ! -f "${PG_BASE_PATH}${_PATH_PG_VERSION}/bin/psql" ]; then
 			echo "[! $(date +'%F %T')] PostgreSQL not found in any paths";
+			. "${DIR}/borg.backup.functions.close.sh" 1;
 			exit 1;
 		fi;
 	fi;
@@ -69,14 +71,17 @@ PG_DUMPALL=${PG_PATH}'pg_dumpall';
 # check that command are here
 if [ ! -f "${PG_PSQL}" ]; then
 	echo "[! $(date +'%F %T')] psql binary not found in ${PG_PATH}";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 if [ ! -f "${PG_DUMP}" ]; then
 	echo "[! $(date +'%F %T')] pg_dump binary not found in ${PG_PATH}";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 if [ ! -f "${PG_DUMPALL}" ]; then
 	echo "[! $(date +'%F %T')] pg_dumpall binary not found in ${PG_PATH}";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 
@@ -95,58 +100,70 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		SCHEMA_ONLY='-s';
 		schema_flag='schema';
 	fi;
-	echo "--- [all databases: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	echo "--- [BACKUP: all databases: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	# Filename
 	FILENAME-"all.${DB_USER}.NONE.${schema_flag}-${DB_VERSION}_${DB_HOST}_${DB_PORT}.c.sql"
 	# backup set:
-	BACKUP_SET_PREFIX="all-";
-	BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
+	BACKUP_SET_PREFIX="${MODULE},all-";
+	BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
 	# borg call
 	BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 	BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";";
 		echo "${PG_DUMPALL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} ${SCHEMA_ONLY} -c | ${BORG_CALL}";
-		echo "${BORG_PRUNE}";
+		if [ -z "${ONE_TIME_TAG}" ]; then
+			echo "${BORG_PRUNE}";
+		fi;
 	fi;
 	if [ ${DRYRUN} -eq 0 ]; then
 		$(${PG_DUMPALL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} ${SCHEMA_ONLY} -c | ${BORG_CALL});
 		_backup_error=$?;
 		if [ $_backup_error -ne 0 ]; then
 			echo "[! $(date +'%F %T')] Backup creation failed for full dump with error code: ${_backup_error}";
+			. "${DIR}/borg.backup.functions.close.sh" 1;
 			exit $_backup_error;
 		fi;
 	fi;
-	echo "Prune repository with keep${KEEP_INFO:1}";
-	${BORG_PRUNE};
+	if [ -z "${ONE_TIME_TAG}" ]; then
+		echo "--- [PRUNE : all databases: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+		echo "Prune repository with keep${KEEP_INFO:1}";
+		${BORG_PRUNE};
+	fi;
 else
 	# dump globals first
 	db="pg_globals";
 	schema_flag="data";
-	echo "--- [${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	echo "--- [BACKUP: ${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	# Filename
 	FILENAME="${db}.${DB_USER}.NONE.${schema_flag}-${DB_VERSION}_${DB_HOST}_${DB_PORT}.c.sql"
 	# backup set:
-	BACKUP_SET_PREFIX="${db}-";
-	BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
+	BACKUP_SET_PREFIX="${MODULE},${db}-";
+	BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
 	# borg call
 	BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 	BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";";
 		echo "${PG_DUMPALL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} --globals-only | ${BORG_CALL}";
-		echo "${BORG_PRUNE}";
+		if [ -z "${ONE_TIME_TAG}" ]; then
+			echo "${BORG_PRUNE}";
+		fi;
 	fi;
 	if [ ${DRYRUN} -eq 0 ]; then
 		${PG_DUMPALL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} --globals-only | ${BORG_CALL};
 		_backup_error=$?;
 		if [ $_backup_error -ne 0 ]; then
 			echo "[! $(date +'%F %T')] Backup creation failed for ${db} dump with error code: ${_backup_error}";
+			. "${DIR}/borg.backup.functions.close.sh" 1;
 			exit $_backup_error;
 		fi;
 	fi;
-	echo "Prune repository with keep${KEEP_INFO:1}";
-	${BORG_PRUNE};
+	if [ -z "${ONE_TIME_TAG}" ]; then
+		echo "--- [PRUNE : ${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+		echo "Prune repository with keep${KEEP_INFO:1}";
+		${BORG_PRUNE};
+	fi;
 
 	# get list of tables
 	for owner_db in $(${PG_PSQL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -d template1 -t -A -F "," -X -q -c "SELECT pg_catalog.pg_get_userbyid(datdba) AS owner, datname, pg_catalog.pg_encoding_to_char(encoding) AS encoding FROM pg_catalog.pg_database WHERE datname "\!"~ 'template(0|1)' ORDER BY datname;"); do
@@ -154,7 +171,8 @@ else
 		owner=$(echo ${owner_db} | cut -d "," -f 1);
 		db=$(echo ${owner_db} | cut -d "," -f 2);
 		encoding=$(echo ${owner_db} | cut -d "," -f 3);
-		echo "--- [${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+		echo "========[DB: ${db}]========================[${MODULE}]====================================>";
+		echo "--- [BACKUP: ${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 		include=0;
 		if [ -s "${BASE_FOLDER}${INCLUDE_FILE}" ]; then
 			while read incl_db; do
@@ -192,10 +210,10 @@ else
 			# Filename
 			# Database.User.Encoding.pgsql|data|schema-Version_Host_Port_YearMonthDay_HourMinute_Counter.Fromat(c).sql
 			FILENAME="${db}.${owner}.${encoding}.${schema_flag}-${DB_VERSION}_${DB_HOST}_${DB_PORT}.c.sql"
-			# backup set:
-			BACKUP_SET_NAME="${db}-${schema_flag}-${BACKUP_SET}";
 			# PER db either data or schema
-			BACKUP_SET_PREFIX="${db}-";
+			BACKUP_SET_PREFIX="${MODULE},${db}-";
+			# backup set:
+			BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
 			# borg call
 			BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 			# borg prune
@@ -203,22 +221,33 @@ else
 			if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 				echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";";
 				echo "${PG_DUMP} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -c ${SCHEMA_ONLY} --format=c ${db} | ${BORG_CALL}";
-				echo "${BORG_PRUNE}";
+				if [ -z "${ONE_TIME_TAG}" ]; then
+					echo "${BORG_PRUNE}";
+				fi;
 			fi;
 			if [ ${DRYRUN} -eq 0 ]; then
 				${PG_DUMP} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -c ${SCHEMA_ONLY} --format=c ${db} | ${BORG_CALL};
 				_backup_error=$?;
 				if [ $_backup_error -ne 0 ]; then
 					echo "[! $(date +'%F %T')] Backup creation failed for ${db} dump with error code: ${_backup_error}";
+					. "${DIR}/borg.backup.functions.close.sh" 1;
 					exit $_backup_error;
 				fi;
 			fi;
-			echo "Prune repository prefixed ${BACKUP_SET_PREFIX} with keep${KEEP_INFO:1}";
-			${BORG_PRUNE};
+			if [ -z "${ONE_TIME_TAG}" ]; then
+				echo "--- [PRUNE : ${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+				echo "Prune repository prefixed ${BACKUP_SET_PREFIX} with keep${KEEP_INFO:1}";
+				${BORG_PRUNE};
+			fi;
 		else
 			echo "- [E] ${db}";
 		fi;
 	done;
+fi;
+# run compact at the end if not a dry run
+if [ -z "${ONE_TIME_TAG}" ]; then
+	# if this is borg version >1.2 we need to run compact after prune
+	. "${DIR}/borg.backup.functions.compact.sh";
 fi;
 
 . "${DIR}/borg.backup.functions.close.sh";

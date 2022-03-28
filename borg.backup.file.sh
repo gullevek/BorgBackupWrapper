@@ -5,7 +5,7 @@
 
 # set last edit date + time
 MODULE="file";
-MODULE_VERSION="1.0.0";
+MODULE_VERSION="1.2.0";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -22,6 +22,7 @@ BACKUP_INIT_CHECK="borg.backup.file.init";
 # exit if include file is missing
 if [ ! -f "${BASE_FOLDER}${INCLUDE_FILE}" ]; then
 	echo "[! $(date +'%F %T')] The include folder file ${INCLUDE_FILE} is missing";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 echo "--- [INCLUDE: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
@@ -146,11 +147,14 @@ if [ -f "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
 		OPT_EXCLUDE="--exclude-from=${TMP_EXCLUDE_FILE}";
 	fi;
 fi;
+
+# set a special file prefix
+BACKUP_SET_PREFIX="${MODULE},";
 # add the repository set before we add the folders
 # base command
-COMMAND="borg create -v ${OPT_LIST} ${OPT_PROGRESS} ${OPT_COMPRESSION} -s ${OPT_REMOTE} ${OPT_EXCLUDE} ";
+COMMAND="${BORG_COMMAND} create -v ${OPT_LIST} ${OPT_PROGRESS} ${OPT_COMPRESSION} -s ${OPT_REMOTE} ${OPT_EXCLUDE} ";
 # add repoistory, after that the folders will be added on call
-COMMAND=${COMMAND}${REPOSITORY}::${BACKUP_SET};
+COMMAND=${COMMAND}${REPOSITORY}::${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${BACKUP_SET};
 # if info print info and then abort run
 . "${DIR}/borg.backup.functions.info.sh";
 
@@ -172,19 +176,26 @@ if [ $FOLDER_OK -eq 1 ]; then
 	fi;
 else
 	echo "[! $(date +'%F %T')] No folders where set for the backup";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 
-# clean up, always verbose
-echo "--- [PRUNE : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
-# build command
-COMMAND="borg prune ${OPT_REMOTE} -v -s --list ${PRUNE_DEBUG} ${KEEP_OPTIONS[*]} ${REPOSITORY}";
-echo "Prune repository with keep${KEEP_INFO:1}";
-if [ ${DEBUG} -eq 1 ]; then
-	echo "${COMMAND//#/ }" | sed -e 's/[ ][ ]*/ /g';
+# clean up, always verbose, but only if we do not run one time tag
+if [ -z "${ONE_TIME_TAG}" ]; then
+	echo "--- [PRUNE : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	# build command
+	COMMAND="${BORG_COMMAND} prune ${OPT_REMOTE} -v --list ${OPT_PROGRESS} ${DRY_RUN_STATS} -P ${BACKUP_SET_PREFIX} ${KEEP_OPTIONS[*]} ${REPOSITORY}";
+	echo "Prune repository with keep${KEEP_INFO:1}";
+	if [ ${DEBUG} -eq 1 ]; then
+		echo "${COMMAND//#/ }" | sed -e 's/[ ][ ]*/ /g';
+	fi;
+	# for the IFS="#" to work we need to replace options spaces with exactly ONE #
+	$(echo "${COMMAND}" | sed -e 's/[ ][ ]*/#/g') 2>&1 || echo "[!] Borg prune aborted";
+	# if this is borg version >1.2 we need to run compact after prune
+	. "${DIR}/borg.backup.functions.compact.sh";
+else
+	echo "[#] No prune with tagged backup";
 fi;
-# for the IFS="#" to work we need to replace options spaces with exactly ONE #
-$(echo "${COMMAND}" | sed -e 's/[ ][ ]*/#/g') 2>&1 || echo "[!] Borg prune aborted";
 
 . "${DIR}/borg.backup.functions.close.sh";
 

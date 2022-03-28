@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 MODULE="gitea"
-MODULE_VERSION="1.0.0";
+MODULE_VERSION="1.1.1";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -35,17 +35,19 @@ if [ -z "${GITEA_CONFIG}" ]; then
 fi;
 if [ ! -f "${GITEA_BIN}" ]; then
 	echo "[! $(date +'%F %T')] Cannot find gitea binary";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 if [ ! -f "${GITEA_CONFIG}" ]; then
 	echo "[! $(date +'%F %T')] Cannot find gitea config";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 # Filename
 FILENAME="gitea.backup.zip";
 # backup set and prefix
-BACKUP_SET_PREFIX="gitea-";
-BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${BACKUP_SET}";
+BACKUP_SET_PREFIX="${MODULE},";
+BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${BACKUP_SET}";
 
 # borg call
 BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
@@ -53,7 +55,9 @@ BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SE
 echo "--- [git data and database: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 	echo "sudo -u ${GIT_USER} ${GITEA_BIN} dump -c ${GITEA_CONFIG} -w ${GITEA_TMP} -L -f - | ${BORG_CALL}";
-	echo "${BORG_PRUNE}";
+	if [ -z "${ONE_TIME_TAG}" ]; then
+		echo "${BORG_PRUNE}";
+	fi;
 fi;
 if [ ${DRYRUN} -eq 0 ]; then
 	(
@@ -69,8 +73,13 @@ if [ ${DRYRUN} -eq 0 ]; then
 		sudo -u ${GIT_USER} ${GITEA_BIN} dump -c ${GITEA_CONFIG} -w ${GITEA_TMP} -L -f - | ${BORG_CALL};
 	) | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' # remove all ESC strings
 fi;
-echo "Prune repository with keep${KEEP_INFO:1}";
-${BORG_PRUNE};
+if [ -z "${ONE_TIME_TAG}" ]; then
+	echo "--- [PRUNE : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	echo "Prune repository with keep${KEEP_INFO:1}";
+	${BORG_PRUNE};
+	# if this is borg version >1.2 we need to run compact after prune
+	. "${DIR}/borg.backup.functions.compact.sh";
+fi;
 
 . "${DIR}/borg.backup.functions.close.sh";
 

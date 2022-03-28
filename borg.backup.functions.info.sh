@@ -4,11 +4,11 @@ if [ ${INFO} -eq 1 ]; then
 	echo "--- [INFO  : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	# show command on debug or dry run
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
-		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";borg info ${OPT_REMOTE} ${REPOSITORY}";
+		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}";
 	fi;
 	# run info command if not a dry drun
 	if [ ${DRYRUN} -eq 0 ]; then
-		borg info ${OPT_REMOTE} ${REPOSITORY};
+		${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY};
 	fi;
 	if [ "${MODULE}" = "files" ]; then
 		if [ $FOLDER_OK -eq 1 ]; then
@@ -23,7 +23,7 @@ if [ ${INFO} -eq 1 ]; then
 			rm -f "${TMP_EXCLUDE_FILE}";
 		fi;
 	fi;
-	echo "=== [END  : $(date +'%F %T')] ==[${MODULE}]====================================>";
+	. "${DIR}/borg.backup.functions.close.sh";
 	exit;
 fi;
 

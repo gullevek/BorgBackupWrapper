@@ -10,7 +10,7 @@
 
 # set last edit date + time
 MODULE="mysql"
-MODULE_VERSION="1.0.0";
+MODULE_VERSION="1.1.0";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -42,10 +42,12 @@ MYSQL_CMD=${MYSQL_BASE_PATH}'mysql';
 # no dump or mysql, bail
 if [ ! -f "${MYSQL_DUMP}" ]; then
 	echo "[! $(date +'%F %T')] mysqldump binary not found";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 if [ ! -f "${MYSQL_CMD}" ]; then
 	echo "[! $(date +'%F %T')] mysql binary not found";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 # check that the user can actually do, else abort here
@@ -54,6 +56,7 @@ _MYSQL_CHECK=$(mysqladmin ${MYSQL_DB_CONFIG_PARAM} ping 2>&1);
 _MYSQL_OK=$(echo "${_MYSQL_CHECK}" | grep "is alive");
 if [ -z "${_MYSQL_OK}" ]; then
 	echo "[! $(date +'%F %T')] Current user has no access right to mysql database";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 # below is for file name only
@@ -89,35 +92,42 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		SCHEMA_ONLY='--no-data';
 		schema_flag='schema';
 	fi;
-	echo "--- [all databases: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	echo "---[BACKUP: all databases: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	# We only do a full backup and not per table backup here
 	# Filename
 	FILENAME="all-${schema_flag}-${DB_TYPE}_${DB_VERSION}_${DB_HOST}_${DB_PORT}.sql"
 	# backup set:
-	BACKUP_SET_PREFIX="all-";
-	BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
+	BACKUP_SET_PREFIX="${MODULE},all-";
+	BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
 	# borg call
 	BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 	BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";";
 		echo "${MYSQL_DUMP} ${MYSQL_DB_CONFIG_PARAM} --all-databases --create-options --add-drop-database --events ${SCHEMA_ONLY} | ${BORG_CALL}";
-		echo "${BORG_PRUNE}";
+		if [ -z "${ONE_TIME_TAG}" ]; then
+			echo "${BORG_PRUNE}";
+		fi;
 	fi;
 	if [ ${DRYRUN} -eq 0 ]; then
 		${MYSQL_DUMP} ${MYSQL_DB_CONFIG_PARAM} --all-databases --create-options --add-drop-database --events ${SCHEMA_ONLY} | ${BORG_CALL};
 		_backup_error=$?;
 		if [ $_backup_error -ne 0 ]; then
 			echo "[! $(date +'%F %T')] Backup creation failed for full dump with error code: ${_backup_error}";
+			. "${DIR}/borg.backup.functions.close.sh" 1;
 			exit $_backup_error;
 		fi;
 	fi;
-	echo "Prune repository with keep${KEEP_INFO:1}";
-	${BORG_PRUNE};
+	if [ -z "${ONE_TIME_TAG}" ]; then
+		echo "--- [PRUNE : all databases: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+		echo "Prune repository with keep${KEEP_INFO:1}";
+		${BORG_PRUNE};
+	fi;
 else
 	${MYSQL_CMD} ${MYSQL_DB_CONFIG_PARAM} -B -N -e "show databases" |
 	while read db; do
-		echo "--- [${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+		echo "========[DB: ${db}]========================[${MODULE}]====================================>";
+		echo "--- [BACKUP: ${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 		# exclude checks
 		include=0;
 		if [ -s "${BASE_FOLDER}${INCLUDE_FILE}" ]; then
@@ -174,8 +184,8 @@ else
 			# prepare borg calls
 			FILENAME="${db}-${schema_flag}-${DB_TYPE}_${DB_VERSION}_${DB_HOST}_${DB_PORT}.sql"
 			# backup set:
-			BACKUP_SET_PREFIX="${db}-"
-			BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
+			BACKUP_SET_PREFIX="${MODULE},${db}-"
+			BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
 			# borg call
 			BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 			BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
@@ -190,15 +200,24 @@ else
 				_backup_error=$?;
 				if [ $_backup_error -ne 0 ]; then
 					echo "[! $(date +'%F %T')] Backup creation failed for ${db} dump with error code: ${_backup_error}";
+					. "${DIR}/borg.backup.functions.close.sh" 1;
 					exit $_backup_error;
 				fi;
 			fi;
-			echo "Prune repository prefixed ${BACKUP_SET_PREFIX} with keep${KEEP_INFO:1}";
-			${BORG_PRUNE};
+			if [ -z "${ONE_TIME_TAG}" ]; then
+				echo "--- [PRUNE : ${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+				echo "Prune repository prefixed ${BACKUP_SET_PREFIX} with keep${KEEP_INFO:1}";
+				${BORG_PRUNE};
+			fi;
 		else
 			echo "- [E] ${db}";
 		fi;
 	done;
+fi;
+# run compact at the end if not a dry run
+if [ -z "${ONE_TIME_TAG}" ]; then
+	# if this is borg version >1.2 we need to run compact after prune
+	. "${DIR}/borg.backup.functions.compact.sh";
 fi;
 
 . "${DIR}/borg.backup.functions.close.sh";

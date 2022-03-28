@@ -2,8 +2,8 @@
 
 # rename to borg.backup.file.settings to use
 
-# set to false to use -file, current default is "true"
-#FILE_REPOSITORY_COMPATIBLE="false"
+# set to true to use old setting without -file in backup name
+#FILE_REPOSITORY_COMPATIBLE="true"
 
 # override settings in borg.backup.settings with SUB_ prefix
 # valid for BACKUP_FILE, BACKUP_SET, COMPRESSION*, KEEP_*

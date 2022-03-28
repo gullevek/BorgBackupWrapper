@@ -13,10 +13,17 @@ cleanup() {
 }
 # on exit unset any exported var
 trap "unset BORG_BASE_DIR BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK BORG_RELOCATED_REPO_ACCESS_IS_OK" EXIT;
+# for version compare
+function version {
+	echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }';
+}
 
 # version for all general files
-VERSION="3.0.2";
+VERSION="4.1.0";
 
+# borg version and borg comamnd
+BORG_VERSION="";
+BORG_COMMAND="borg";
 # default log folder if none are set in config or option
 _LOG_FOLDER="/var/log/borg.backup/";
 # log file name is set based on BACKUP_FILE, .log is added
@@ -34,6 +41,9 @@ INCLUDE_FILE="";
 EXCLUDE_FILE="";
 # backup folder initialzed check
 BACKUP_INIT_CHECK="";
+# one time backup prefix tag, if set will use <tag>.<prefix>-Y-M-DTh:m:s type backup prefix
+ONE_TIME_TAG="";
+DELETE_ONE_TIME_TAG="";
 # debug/verbose
 VERBOSE=0;
 LIST=0;
@@ -51,13 +61,14 @@ _BORG_RELOCATED_REPO_ACCESS_IS_OK="yes";
 # NOTE: to keep the old .borg repository name for file module set this to true
 # if set to false (future) it will add -file to the repository name like for other
 # modules
-FILE_REPOSITORY_COMPATIBLE="true";
+FILE_REPOSITORY_COMPATIBLE="false";
 # other variables
 TARGET_SERVER="";
 REGEX="";
 REGEX_COMMENT="^[\ \t]*#";
 REGEX_GLOB='\*';
 REGEX_NUMERIC="^[0-9]{1,2}$";
+REGEX_ERROR="^Some part of the script failed with an error:";
 PRUNE_DEBUG="";
 INIT_REPOSITORY=0;
 FOLDER_OK=0;
@@ -77,6 +88,10 @@ TARGET_BORG_PATH="";
 TARGET_FOLDER="";
 BACKUP_FILE="";
 SUB_BACKUP_FILE="";
+# OPT is for options set
+OPT_BORG_EXECUTEABLE="";
+# which overrides BORG_EXECUTABLE that can be set in the settings file
+BORG_EXECUTEABLE="";
 # lz4, zstd 1-22 (3), zlib 0-9 (6), lzma 0-9 (6)
 DEFAULT_COMPRESSION="zstd";
 DEFAULT_COMPRESSION_LEVEL=3;
@@ -147,13 +162,16 @@ function usage()
 
 	-c <config folder>: if this is not given, ${BASE_FOLDER} is used
 	-L <log folder>: override config set and default log folder
+	-T <tag>: create one time stand alone backup prefixed with tag name
+	-D <tag backup set>: remove a tagged backup set, full name must be given
+	-b <borg executable>: override default path
 	-P: print list of archives created
 	-C: check if repository exists, if not abort
 	-E: exit after check
 	-I: init repository (must be run first)
-	-v: be verbose
 	-i: print out only info
 	-l: list files during backup
+	-v: be verbose
 	-d: debug output all commands
 	-n: only do dry run
 	-h: this help page
@@ -165,13 +183,22 @@ function usage()
 }
 
 # set options
-while getopts ":c:L:vldniCEIPh" opt; do
+while getopts ":c:L:T:D:b:vldniCEIPh" opt; do
 	case "${opt}" in
 		c|config)
 			BASE_FOLDER=${OPTARG};
 			;;
-		L|log)
+		L|Log)
 			OPT_LOG_FOLDER=${OPTARG};
+			;;
+		T|Tag)
+			ONE_TIME_TAG=${OPTARG};
+			;;
+		D|Delete)
+			DELETE_ONE_TIME_TAG=${OPTARG};
+			;;
+		b|borg)
+			OPT_BORG_EXECUTEABLE=${OPTARG};
 			;;
 		C|Check)
 			# will check if repo is there and abort if not
@@ -244,8 +271,34 @@ if [ ${CHECK} -eq 1 ] || [ ${INIT} -eq 1 ] && [ ${INFO} -eq 1 ]; then
 	exit 1;
 fi;
 # print -P cannot be run with -i/-C/-I together
-if [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] && [ ${CHECK} -eq 1 ] && [ ${INFO} -eq 1 ]; then
+if [ ${PRINT} -eq 1 ] && ([ ${INIT} -eq 1 ] || [ ${CHECK} -eq 1 ] || [ ${INFO} -eq 1 ]); then
 	echo "Cannot have -P print option and -i info, -C check or -I initizalize option at the same time";
+	exit 1;
+fi;
+# if tag is set, you can't have init, check, info, etc
+if [ ! -z "${ONE_TIME_TAG}" ] && ([ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${CHECK} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+	echo "Cannot have -T '${ONE_TIME_TAG}' option with -i info, -C check, -I initialize or -P print option at the same time";
+	exit 1;
+fi;
+# check only alphanumeric, no spaces, only underscore and dash
+if [ ! -z "${ONE_TIME_TAG}" ] && ! [[ "${ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+$ ]]; then
+	echo "One time tag '${ONE_TIME_TAG}' must be alphanumeric with dashes and underscore only.";
+	exit 1;
+elif [ ! -z "${ONE_TIME_TAG}" ]; then
+	# all ok, attach . at the end
+	ONE_TIME_TAG=${ONE_TIME_TAG}".";
+fi;
+# if -D, cannot be with -T, -i, -C, -I, -P
+if [ ! -z "${DELETE_ONE_TIME_TAG}" ] && ([ ! -z "${ONE_TIME_TAG}" ] || [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${CHECK} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+	echo "Cannot have -D delete tag option with -T one time tag, -i info, -C check, -I initialize or -P print option at the same time";
+	exit 1;
+fi;
+# -D also must be in valid backup set format
+# ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]
+if [ ! -z "${DELETE_ONE_TIME_TAG}" ] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},([A-Za-z0-9_-]+-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]; then
+	echo "Delete one time tag '${DELETE_ONE_TIME_TAG}' is in an invalid format. Please check existing tags with -P option."
+	echo "For a globing be sure it is in the format of: TAG.MODULE,*-YYYY-MM-DDT*";
+	echo "Note the dash (-) after the first *, also time (T) is a globa (*) must."
 	exit 1;
 fi;
 
@@ -258,12 +311,45 @@ fi;
 if [ ${LIST} -eq 1 ]; then
 	OPT_LIST="--list";
 fi;
+# If dry run, the stats (-s) option cannot be used
 if [ ${DRYRUN} -eq 1 ]; then
-	PRUNE_DEBUG="--dry-run";
+	DRY_RUN_STATS="-n";
+else
+	DRY_RUN_STATS="-s";
 fi;
 
 # read config file
 . "${BASE_FOLDER}${SETTINGS_FILE}";
+
+# if OPTION SET overrides ALL others
+if [ ! -z "${OPT_BORG_EXECUTEABLE}" ]; then
+	BORG_COMMAND="${OPT_BORG_EXECUTEABLE}";
+	if [ ! -f "${BORG_COMMAND}" ]; then
+		echo "borg command not found with option -b: ${BORG_COMMAND}";
+		exit;
+	fi;
+# if in setting file, use this
+elif [ ! -z "${BORG_EXECUTEABLE}" ]; then
+	BORG_COMMAND="${BORG_EXECUTEABLE}";
+	if [ ! -f "${BORG_COMMAND}" ]; then
+		echo "borg command not found with setting: ${BORG_COMMAND}";
+		exit;
+	fi;
+elif ! command -v borg &> /dev/null; then
+	echo "borg backup seems not to be installed, please check paths";
+	exit;
+fi;
+# check that this is a borg executable, no detail check
+_BORG_COMMAND_CHECK=$(${BORG_COMMAND} -V | grep "borg");
+if [[ "${_BORG_COMMAND_CHECK}" =~ ${REGEX_ERROR} ]]; then
+	echo "Cannot extract borg info from command, is this a valid borg executable?: ${BORG_COMMAND}";
+	exit;
+fi;
+# extract actually borg version from here
+# alt sed to get only numbes: sed -e 's/.* \([0-9]*\.[0-9]*\.[0-9]*\)$/\1/g'
+# or use cut -d " " -f 2 and assume NO space in the first part
+BORG_VERSION=$(${BORG_COMMAND} -V | sed -e 's/borg.* //') 2>&1 || echo "[!] Borg version not estable";
+
 # load default settings for fileds not set
 if [ -z "${COMPRESSION}" ]; then
 	COMPRESSION="${DEFAULT_COMPRESSION}";
@@ -341,7 +427,7 @@ if [ -f "${BASE_FOLDER}${SETTINGS_FILE_SUB}" ]; then
 fi;
 # add module name to backup file, always
 # except if FILE module and FILE_REPOSITORY_COMPATIBLE="true"
-if ([ "${FILE_REPOSITORY_COMPATIBLE}" = "false" ] && [ "${MODULE,,}" = "file" ]) || [ "${MODULE,,}" != "file" ]; then
+if [ "${FILE_REPOSITORY_COMPATIBLE}" != "true" ] || [ "${MODULE,,}" != "file" ]; then
 	BACKUP_FILE=${BACKUP_FILE/.borg/-${MODULE,,}.borg};
 fi;
 # backup file must be set

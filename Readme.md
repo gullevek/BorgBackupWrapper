@@ -4,6 +4,29 @@ These scripts are wrappers around the main borg backup scripts.
 
 Modules for plain file backup, mysql and postgresql backup exists.
 
+## IMPORTANT NOTICE FOR UPGRADE TO VERSION 4.0 OR HIGHER
+
+*VERSION 4.0* CHANGE
+
+Version 4.0 introduces default borg repository name with `-file` for the `file` module. The repository has to be renamed manual before the next backup or the backup will fail.
+
+*Example:*
+
+Old backup name
+```sh
+BACKUP_FILE="some-backup-data.borg"
+```
+Then the file need to be renamed the following way:
+`mv some-backup-data.borg some-backup-data-file.borg`
+
+Below changes have to be done after the `file` module backup has been renamed.
+
+With Version 4.0 all backup sets are prefixed with the module name and a comma. For exmaple the files backup will have backup set "file,YYYY-MM-DD" as base name.
+
+To make sure prune of archives will work the `_borg_backup_set_prefix_cleanup.sh` script has to be run once. It has the same config (-c), debug (-d) and dry run (-n) options like the main scripts. It is recommended to run with the dry-run script first and see that the list of chagnes matches the expectation.
+
+The zabbix module has the prefix changed from `zabbix-settings-` to `zabbix,settings-` to match the new archive set rules
+
 ## Recommended setup
 
 git clone this repostory into the target folder:
@@ -15,6 +38,53 @@ Now the core scripts can be updated with a simple
 `git pull`
 
 No settings files will be overwritten
+
+## Possible command line options
+
+### `-c <config folder>`
+if this is not given, /usr/local/scripts/borg/ is used
+
+### `-L <log folder>`
+override config set and default log folder
+
+### `-T <tag>`
+create one time stand alone backup prefixed with tag name
+
+### `-D <tag backup set>`
+remove a tagged backup set, full name must be given
+
+### `-b <borg executable>`
+override the default borg executable found in path
+
+### `-P`
+print list of archives created
+
+### `-C`
+check if repository exists, if not abort
+
+### `-E`
+exit after check
+
+### `-I`
+init repository (must be run first)
+
+### `-i`
+print out only info
+
+### `-l`
+list files during backup
+
+### `-v`
+be verbose
+
+### `-d`
+debug output all commands
+
+### `-n`
+only do dry run
+
+### `-h`
+this help page
 
 ## Basic Settings
 
@@ -60,7 +130,7 @@ All module settings files can have the following prefixed with `SUB_` to overrid
  * SUB_KEEP_YEARS
  * SUB_KEEP_WITHIN
 
-## Setup backup via SSH to remote host
+## Setup backup via SSH to remote host on `borg.backup.settings`
 
 For this the following settings are from interest
 
@@ -74,7 +144,15 @@ Note that if `.ssh/config` is used only `TARGET_HOST` needs to be set. Recommene
 
 and `TARGET_BORG_PATH="";` if the target borg is in a non default path
 
+## Override borg executable in `borg.backup.settings`
+
+`BORG_EXECUTABLE="<full path to borg>"`
+
 ## File backup settings
+
+On new setups it is recommended to use the `borg.backup.file.setings` and set
+`FILE_REPOSITORY_COMPATIBLE`
+to `true`
 
 ### Config variables
 

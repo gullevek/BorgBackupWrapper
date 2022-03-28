@@ -3,7 +3,7 @@
 # Backup zabbix config and settings only
 
 MODULE="zabbix"
-MODULE_VERSION="1.0.1";
+MODULE_VERSION="1.1.1";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -24,7 +24,8 @@ if [ -z "${ZABBIX_DUMP_BIN}" ]; then
 fi;
 if [ ! -z "${ZABBIX_CONFIG}" ] && [ ! -f "${ZABBIX_CONFIG}" ]; then
 	echo "[! $(date +'%F %T')] Cannot find zabbix config: ${ZABBIX_CONFIG}";
-	exit;
+	. "${DIR}/borg.backup.functions.close.sh" 1;
+	exit 1;
 fi;
 if [ -f "${ZABBIX_CONFIG}" ]; then
 	OPT_ZABBIX_CONFIG="-z ${ZABBIX_CONFIG}";
@@ -34,10 +35,12 @@ if [ "${ZABBIX_DATABASE}" = "psql" ]; then
 fi;
 if [ "${ZABBIX_DATABASE}" != "psql" ] && [ "${ZABBIX_DATABASE}" != "mysql" ]; then
 	echo "[! $(date +'%F %T')] Zabbix dump must have database set to either psql or mysql";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 if [ ! -f "${ZABBIX_DUMP_BIN}" ]; then
 	echo "[! $(date +'%F %T')] Zabbix dump script could not be found: ${ZABBIX_DUMP_BIN}";
+	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
 # -i (ignore)/ -f (backup)
@@ -50,8 +53,8 @@ fi;
 # Filename
 FILENAME="zabbix-config.c.sql";
 # backup set:
-BACKUP_SET_PREFIX="zabbix-settings-";
-BACKUP_SET_NAME="${BACKUP_SET_PREFIX}${BACKUP_SET}";
+BACKUP_SET_PREFIX="${MODULE},settings-";
+BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${BACKUP_SET}";
 
 # borg call
 BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
@@ -61,13 +64,23 @@ if [ -z "${BACKUP_SET_PREFIX}" ]; then
 	BORG_PRUNE=$(echo "${BORG_PRUNE}" | sed -e 's/-P //');
 fi;
 
-echo "--- [zabbix settings: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+echo "--- [BACKUP: zabbix settings: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 	echo "${ZABBIX_DUMP_BIN} -t ${ZABBIX_DATABASE} ${OPT_ZABBIX_UNKNOWN_TABLES} ${OPT_ZABBIX_DUMP} ${OPT_ZABBIX_CONFIG} -o - | ${BORG_CALL}"
-	echo "${BORG_PRUNE}";
+	if [ -z "${ONE_TIME_TAG}" ]; then
+		echo "${BORG_PRUNE}";
+	fi;
 fi;
 if [ ${DRYRUN} -eq 0 ]; then
 	${ZABBIX_DUMP_BIN} -t ${ZABBIX_DATABASE} ${OPT_ZABBIX_UNKNOWN_TABLES} ${OPT_ZABBIX_DUMP} ${OPT_ZABBIX_CONFIG} -o - | ${BORG_CALL};
 fi;
-echo "Prune repository with keep${KEEP_INFO:1}";
-${BORG_PRUNE};
+if [ -z "${ONE_TIME_TAG}" ]; then
+	echo "--- [PRUNE : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	${BORG_PRUNE};
+	# if this is borg version >1.2 we need to run compact after prune
+	. "${DIR}/borg.backup.functions.compact.sh";
+fi;
+
+. "${DIR}/borg.backup.functions.close.sh";
+
+# __EMD__
