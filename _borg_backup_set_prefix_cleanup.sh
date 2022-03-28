@@ -9,6 +9,7 @@
 # zabbix-settings-
 
 export BORG_BASE_DIR="borg/";
+DEBUG=0;
 DRYRUN=0;
 TARGET_USER="";
 TARGET_HOST="";
