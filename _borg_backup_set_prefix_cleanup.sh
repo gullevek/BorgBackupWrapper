@@ -8,14 +8,16 @@
 # pgsql
 # zabbix-settings-
 
-export BORG_BASE_DIR="borg/";
+# debug and dry run
 DEBUG=0;
 DRYRUN=0;
+# basic settings needed
 TARGET_USER="";
 TARGET_HOST="";
 TARGET_PORT="";
 TARGET_BORG_PATH="";
 TARGET_FOLDER="";
+# base folder
 BASE_FOLDER="/usr/local/scripts/borg/";
 # those are the valid modules
 MODULE_LIST="file gitea mysql pgsql zabbix"
@@ -26,7 +28,7 @@ MODULE_LIST="file gitea mysql pgsql zabbix"
 while getopts ":c:nd" opt; do
 	case "${opt}" in
 		c|config)
-			BASE_FOLDER=${OPTARG}"/";
+			BASE_FOLDER=${OPTARG};
 			;;
 		d|debug)
 			DEBUG=1;
@@ -56,6 +58,11 @@ if [ ! -f "${BASE_FOLDER}${SETTINGS_FILE}" ]; then
 	exit;
 fi;
 . "${BASE_FOLDER}${SETTINGS_FILE}";
+
+export BORG_BASE_DIR="${BASE_FOLDER}";
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK="yes";
+export BORG_RELOCATED_REPO_ACCESS_IS_OK="yes";
+
 ORIG_BACKUPFILE=${BACKUP_FILE};
 for MODULE in ${MODULE_LIST}; do
 	echo "************* MODULE: ${MODULE}";
