@@ -112,7 +112,12 @@ for MODULE in ${MODULE_LIST}; do
 				target_name=$(echo $i | sed -e 's/gitea-/gitea,/');
 			fi;
 		elif [ "${MODULE}" = "zabbix" ]; then
-			target_name=$(echo $i | sed -e 's/zabbix-settings-/zabbix,settings-/');
+			# if zabbix is missing, prefix
+			if [ ! -z "${i##zabbix*}" ]; then
+				target_name="${MODULE},${i}";
+			else
+				target_name=$(echo $i | sed -e 's/zabbix-settings-/zabbix,settings-/');
+			fi;
 		else
 			target_name="${MODULE},${i}";
 		fi;
