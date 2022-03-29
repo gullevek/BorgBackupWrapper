@@ -106,7 +106,7 @@ for MODULE in ${MODULE_LIST}; do
 		if [ "${MODULE}" = "gitea" ]; then
 			# if just date, add gitea,
 			# else rename
-			if [ -z "${i##*gitea*}" ]; then
+			if [ ! -z "${i##gitea*}" ]; then
 				target_name="${MODULE},${i}";
 			else
 				target_name=$(echo $i | sed -e 's/gitea-/gitea,/');
