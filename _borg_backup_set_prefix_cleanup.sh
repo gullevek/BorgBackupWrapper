@@ -103,9 +103,9 @@ for MODULE in ${MODULE_LIST}; do
 	borg list ${OPT_REMOTE} --format '{archive}{NL}' ${REPOSITORY}|grep -v "${MODULE},"|
 	while read i; do
 		# for gitea, zabbix we do not ADD we RENAME
-		if [ "${MODILE}" = "gitea" ]; then
+		if [ "${MODULE}" = "gitea" ]; then
 			target_name=$(echo $i | sed -e 's/gitea-/gitea,/');
-		elif [ "${MODILE}" = "zabbix" ]; then
+		elif [ "${MODULE}" = "zabbix" ]; then
 			target_name=$(echo $i | sed -e 's/zabbix-settings-/zabbix,settings-/');
 		else
 			target_name="${MODULE},${i}";
