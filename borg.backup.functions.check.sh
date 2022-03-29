@@ -76,7 +76,9 @@ elif [ ! -z "${TARGET_HOST}" ]; then
 fi;
 # we dont allow special characters, so we don't need to special escape it
 REPOSITORY="${TARGET_SERVER}${TARGET_FOLDER}${BACKUP_FILE}";
+REPOSITORY_ID=$(${BORG_COMMAND} config ${OPT_REMOTE} ${REPOSITORY} id);
 echo "Repository    : ${REPOSITORY}";
+echo "Repository ID : ${REPOSITORY_ID}";
 
 # check compression if given is valid and check compression level is valid if given
 OPT_COMPRESSION='';
@@ -311,7 +313,7 @@ if [ ${PRINT} -eq 1 ]; then
 	fi;
 	# run info command if not a dry drun
 	if [ ${DRYRUN} -eq 0 ]; then
-		borg list ${OPT_REMOTE} --format "${FORMAT}" ${REPOSITORY} ;
+		${BORG_COMMAND} list ${OPT_REMOTE} --format "${FORMAT}" ${REPOSITORY} ;
 	fi;
 	if [ ${VERBOSE} -eq 1 ]; then
 		echo "";
