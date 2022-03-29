@@ -97,7 +97,7 @@ for MODULE in ${MODULE_LIST}; do
 	# .cache/borg/<postgresql repo id>
 	CMD_PREFIX="";
 	if [ "${MODULE}" = "pgsql" ]; then
-		CMD_PREFIX="sudo -u postgres ";
+		CMD_PREFIX="sudo -E -u postgres ";
 	fi;
 	echo "==== REPOSITORY: ${REPOSITORY}";
 	borg list ${OPT_REMOTE} --format '{archive}{NL}' ${REPOSITORY}|grep -v "${MODULE},"|
