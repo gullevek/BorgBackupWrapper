@@ -104,7 +104,13 @@ for MODULE in ${MODULE_LIST}; do
 	while read i; do
 		# for gitea, zabbix we do not ADD we RENAME
 		if [ "${MODULE}" = "gitea" ]; then
-			target_name=$(echo $i | sed -e 's/gitea-/gitea,/');
+			# if just date, add gitea,
+			# else rename
+			if [ -z "${i##*gitea*}" ]; then
+				target_name="${MODULE},${i}";
+			else
+				target_name=$(echo $i | sed -e 's/gitea-/gitea,/');
+			fi;
 		elif [ "${MODULE}" = "zabbix" ]; then
 			target_name=$(echo $i | sed -e 's/zabbix-settings-/zabbix,settings-/');
 		else
