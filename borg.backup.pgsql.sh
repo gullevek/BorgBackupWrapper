@@ -22,6 +22,7 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 INCLUDE_FILE="borg.backup.pgsql.include";
 EXCLUDE_FILE="borg.backup.pgsql.exclude";
 SCHEMA_ONLY_FILE="borg.backup.pgsql.schema-only";
+DATA_ONLY_FILE="borg.backup.pgsql.data-only";
 # init check file
 BACKUP_INIT_CHECK="borg.backup.pgsql.init";
 
@@ -195,9 +196,13 @@ else
 		fi;
 		if [ ${include} -eq 1 ] && [ ${exclude} -eq 0 ]; then
 			# set dump type
-			SCHEMA_ONLY=''; # empty for all
-			schema_flag='data'; # or data
+			SCHEMA_ONLY='';
+			schema_flag=''; # schema or data
+			# schema exclude over data exclude, can't have both
 			if [ -s "${BASE_FOLDER}${SCHEMA_ONLY_FILE}" ]; then
+				# default is data dump
+				SCHEMA_ONLY='';
+				schema_flag='data';
 				while read schema_db; do
 					if [ "${db}" = "${schema_db}" ]; then
 						SCHEMA_ONLY='-s';
@@ -206,6 +211,23 @@ else
 						break;
 					fi;
 				done<"${BASE_FOLDER}${SCHEMA_ONLY_FILE}";
+			elif [ -s "${BASE_FOLDER}${DATA_ONLY_FILE}" ]; then
+				# default to schema, unless in data list
+				SCHEMA_ONLY='-s';
+				schema_flag='schema';
+				while read data_db; do
+					if [ "${db}" = "${data_db}" ]; then
+						SCHEMA_ONLY='';
+						schema_flag='data';
+						# skip out
+						break;
+					fi;
+				done<"${BASE_FOLDER}${DATA_ONLY_FILE}";
+			fi;
+			# if nothing is set, default to data
+			if [ -z "${schema_flag}" ]; then
+				SCHEMA_ONLY=''
+				schema_flag="data";
 			fi;
 			# Filename
 			# Database.User.Encoding.pgsql|data|schema-Version_Host_Port_YearMonthDay_HourMinute_Counter.Fromat(c).sql
