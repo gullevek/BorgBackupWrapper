@@ -11,8 +11,10 @@
 # debug and dry run
 DEBUG=0;
 DRYRUN=0;
+PGSQL_SUDO=1;
 # options
 OPT_REMOTE="";
+PGSQL_SUDO_USER="postgres";
 # basic settings needed
 TARGET_USER="";
 TARGET_HOST="";
@@ -27,10 +29,13 @@ MODULE_LIST="file gitea mysql pgsql zabbix"
 # basic options
 # -c for config file override
 # -n for dry run test
-while getopts ":c:nd" opt; do
+while getopts ":c:snd" opt; do
 	case "${opt}" in
 		c|config)
 			BASE_FOLDER=${OPTARG};
+			;;
+		s|nosudo)
+			PGSQL_SUDO=0;
 			;;
 		d|debug)
 			DEBUG=1;
@@ -96,8 +101,9 @@ for MODULE in ${MODULE_LIST}; do
 	# .config/borg/security/<postgresql repo id>
 	# .cache/borg/<postgresql repo id>
 	CMD_PREFIX="";
-	if [ "${MODULE}" = "pgsql" ]; then
-		CMD_PREFIX="sudo -E -u postgres ";
+	# only sudo to pgsql if sudo is set to true
+	if [ "${MODULE}" = "pgsql" ] && [ "${PGSQL_SUDO}" = "1" ]; then
+		CMD_PREFIX="sudo -E -u ${PGSQL_SUDO_USER} ";
 	fi;
 	echo "==== REPOSITORY: ${REPOSITORY}";
 	borg list ${OPT_REMOTE} --format '{archive}{NL}' ${REPOSITORY}|grep -v "${MODULE},"|
