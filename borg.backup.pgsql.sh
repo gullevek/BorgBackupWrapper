@@ -10,7 +10,7 @@
 
 # set last edit date + time
 MODULE="pgsql"
-MODULE_VERSION="1.1.1";
+MODULE_VERSION="1.2.0";
 
 
 DIR="${BASH_SOURCE%/*}"
