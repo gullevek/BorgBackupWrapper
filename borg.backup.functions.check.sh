@@ -133,7 +133,7 @@ if [ ! -w "${HOME}" ] || [ "${HOME}" = '/' ]; then
 fi;
 
 # keep optionfs (for files)
-KEEP_OPTIONS=();
+KEEP_OPTIONS=("");
 # keep info string (for files)
 KEEP_INFO="";
 # override standard keep for tagged backups
