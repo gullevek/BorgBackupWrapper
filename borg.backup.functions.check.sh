@@ -133,12 +133,14 @@ if [ ! -w "${HOME}" ] || [ "${HOME}" = '/' ]; then
 fi;
 
 # keep optionfs (for files)
-KEEP_OPTIONS=("");
+KEEP_OPTIONS=();
 # keep info string (for files)
 KEEP_INFO="";
 # override standard keep for tagged backups
 if [ ! -z "${ONE_TIME_TAG}" ]; then
 	BACKUP_SET="{now:%Y-%m-%dT%H:%M:%S}";
+	# set empty to avoid problems
+	KEEP_OPTIONS=("");
 else
 	# build options and info string,
 	# also flag BACKUP_SET check if hourly is set
@@ -182,7 +184,7 @@ else
 		fi;
 	fi;
 	# abort if KEEP_OPTIONS is empty
-	if [ -z "${KEEP_OPTIONS}" ]; then
+	if [ "${#KEEP_OPTIONS[@]}" -eq "0" ]; then
 		echo "[! $(date +'%F %T')] It seems no KEEP_* entries where set in a valid format.";
 		exit 1;
 	fi;
@@ -196,7 +198,6 @@ else
 		BACKUP_SET=$(echo "${BACKUP_SET}" | sed -e "s/}/T%H:%M:%S}/");
 	fi;
 fi;
-
 
 # for folders list split set to "#" and keep the old setting as is
 _IFS=${IFS};
