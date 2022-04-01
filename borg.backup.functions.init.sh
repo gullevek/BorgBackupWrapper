@@ -30,6 +30,8 @@ _LOG_FOLDER="/var/log/borg.backup/";
 LOG_FOLDER="";
 # should be there on everything
 TEMPDIR="/tmp/";
+# HOSTNAME (as set on server)
+HOSTNAME=$(hostname);
 # creates borg backup based on the include/exclude files
 # if base borg folder (backup files) does not exist, it will automatically init it
 # base folder
@@ -41,6 +43,7 @@ INCLUDE_FILE="";
 EXCLUDE_FILE="";
 # backup folder initialzed check
 BACKUP_INIT_CHECK="";
+BACKUP_INIT_DATE="";
 # one time backup prefix tag, if set will use <tag>.<prefix>-Y-M-DTh:m:s type backup prefix
 ONE_TIME_TAG="";
 DELETE_ONE_TIME_TAG="";

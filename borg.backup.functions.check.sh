@@ -2,18 +2,24 @@
 
 # start time in seconds
 START=$(date +'%s');
+# set init date, or today if not file is set
+BACKUP_INIT_DATE=$(printf '%(%c)T' $(cat "${BASE_FOLDER}${BACKUP_INIT_CHECK}" 2>/dev/null));
 # start logging from here
 exec &> >(tee -a "${LOG}");
 echo "=== [START : $(date +'%F %T')] ==[${MODULE}]====================================>";
 # show info for version always
-echo "Script version: ${VERSION}";
+echo "Script version  : ${VERSION}";
 # show type
-echo "Backup module : ${MODULE}";
-echo "Module version: ${MODULE_VERSION}";
+echo "Backup module   : ${MODULE}";
+echo "Module version  : ${MODULE_VERSION}";
 # borg version
-echo "Borg version  : ${BORG_VERSION}";
+echo "Borg version    : ${BORG_VERSION}";
+# host name
+echo "Hostname        : ${HOSTNAME}";
 # show base folder always
-echo "Base folder   : ${BASE_FOLDER}";
+echo "Base folder     : ${BASE_FOLDER}";
+# Module init date (when init file was writen)
+echo "Module init date: ${BACKUP_INIT_DATE}";
 
 # if force check is true set CHECK to 1unless INFO is 1
 # Needs bash 4.0 at lesat for this
@@ -76,7 +82,7 @@ elif [ ! -z "${TARGET_HOST}" ]; then
 fi;
 # we dont allow special characters, so we don't need to special escape it
 REPOSITORY="${TARGET_SERVER}${TARGET_FOLDER}${BACKUP_FILE}";
-echo "Repository    : ${REPOSITORY}";
+echo "Repository      : ${REPOSITORY}";
 
 # check compression if given is valid and check compression level is valid if given
 OPT_COMPRESSION='';
