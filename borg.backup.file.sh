@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-# Run -I first to initialize repository
-# There are no automatic repository checks unless -C is given
+# Plain file backup
 
 # set last edit date + time
 MODULE="file";
-MODULE_VERSION="1.2.0";
+MODULE_VERSION="1.2.1";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -14,10 +13,11 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 # include and exclude file
 INCLUDE_FILE="borg.backup.file.include";
 EXCLUDE_FILE="borg.backup.file.exclude";
-# init check file
-BACKUP_INIT_CHECK="borg.backup.file.init";
+# init verify file
+BACKUP_INIT_VERIFY="borg.backup.file.init";
 
-. "${DIR}/borg.backup.functions.check.sh";
+# verify valid data
+. "${DIR}/borg.backup.functions.verify.sh";
 
 # exit if include file is missing
 if [ ! -f "${BASE_FOLDER}${INCLUDE_FILE}" ]; then

@@ -19,7 +19,7 @@ function version {
 }
 
 # version for all general files
-VERSION="4.2.4";
+VERSION="4.3.0";
 
 # borg version and borg comamnd
 BORG_VERSION="";
@@ -41,19 +41,23 @@ SETTINGS_FILE="borg.backup.settings";
 # include files
 INCLUDE_FILE="";
 EXCLUDE_FILE="";
-# backup folder initialzed check
-BACKUP_INIT_CHECK="";
+# backup folder initialzed verify
+BACKUP_INIT_VERIFY="";
 BACKUP_INIT_DATE="";
 # one time backup prefix tag, if set will use <tag>.<prefix>-Y-M-DTh:m:s type backup prefix
 ONE_TIME_TAG="";
 DELETE_ONE_TIME_TAG="";
-# debug/verbose
+# check command prefix/glob
+CHECK_PREFIX="";
+# debug/verbose/other flags
 VERBOSE=0;
 LIST=0;
 DEBUG=0;
 DRYRUN=0;
 INFO=0;
+VERIFY=0;
 CHECK=0;
+CHECK_VERIFY_DATA=0;
 INIT=0;
 EXIT=0;
 PRINT=0;
@@ -83,6 +87,7 @@ OPT_LIST="";
 OPT_REMOTE="";
 OPT_LOG_FOLDER="";
 OPT_EXCLUDE="";
+OPT_CHECK_VERIFY_DATA="";
 # config variables (will be overwritten from .settings file)
 TARGET_USER="";
 TARGET_HOST="";
@@ -105,9 +110,10 @@ SUB_COMPRESSION_LEVEL="";
 # encryption settings
 DEFAULT_ENCRYPTION="none";
 ENCRYPTION="";
-# force check always
-DEFAULT_FORCE_CHECK="false";
-FORCE_CHECK="";
+# force verify always
+DEFAULT_FORCE_VERIFY="false";
+FORCE_VERIFY="";
+FORCE_CHECK=""; # Deprecated name, use FORCE_VERIFY
 BACKUP_SET="";
 SUB_BACKUP_SET="";
 # for database backup only
@@ -168,9 +174,12 @@ function usage()
 	-T <tag>: create one time stand alone backup prefixed with tag name
 	-D <tag backup set>: remove a tagged backup set, full name must be given
 	-b <borg executable>: override default path
+	-C: run borg check if repository is ok
+	-y: in combination with -C: add --verify-data
+	-p <archive prefix|glob>: in combinatio with -C: only check archives with prefix or glob
 	-P: print list of archives created
-	-C: check if repository exists, if not abort
-	-E: exit after check
+	-V: verify if repository exists, if not abort
+	-e: exit after verify
 	-I: init repository (must be run first)
 	-i: print out only info
 	-l: list files during backup
@@ -186,7 +195,7 @@ function usage()
 }
 
 # set options
-while getopts ":c:L:T:D:b:vldniCEIPh" opt; do
+while getopts ":c:L:T:D:b:p:vldniCVeIPyh" opt; do
 	case "${opt}" in
 		c|config)
 			BASE_FOLDER=${OPTARG};
@@ -204,17 +213,30 @@ while getopts ":c:L:T:D:b:vldniCEIPh" opt; do
 			OPT_BORG_EXECUTEABLE=${OPTARG};
 			;;
 		C|Check)
-			# will check if repo is there and abort if not
+			# will run borg check
+			# alt modes --repository-only, --archives-only,
+			# add mode --verify-data
+			# note that --repair has to be called manually is it might damange backups
 			CHECK=1;
 			;;
-		E|Exit)
-			# exit after check
+		y|Verify-Data)
+			CHECK_VERIFY_DATA=1;
+			;;
+		p|prefix-glob)
+			CHECK_PREFIX=${OPTARG};
+			;;
+		V|Verify)
+			# will verify if repo is there and abort if not
+			VERIFY=1;
+			;;
+		e|exit)
+			# exit after verify or init (default off)
 			EXIT=1;
 			;;
 		I|Init)
 			# will check if there is a repo and init it
 			# previoous this was default
-			CHECK=1;
+			VERIFY=1;
 			INIT=1;
 			;;
 		P|Print)
@@ -269,21 +291,21 @@ if [ ! -w "${BASE_FOLDER}" ]; then
 fi;
 
 # info -i && -C/-I cannot be run together
-if [ ${CHECK} -eq 1 ] || [ ${INIT} -eq 1 ] && [ ${INFO} -eq 1 ]; then
-	echo "Cannot have -i info option and -C check or -I initialize option at the same time";
+if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ] && [ ${INFO} -eq 1 ]; then
+	echo "Cannot have -i info option and -V verify or -I initialize option at the same time";
 	exit 1;
 fi;
 # print -P cannot be run with -i/-C/-I together
-if [ ${PRINT} -eq 1 ] && ([ ${INIT} -eq 1 ] || [ ${CHECK} -eq 1 ] || [ ${INFO} -eq 1 ]); then
-	echo "Cannot have -P print option and -i info, -C check or -I initizalize option at the same time";
+if [ ${PRINT} -eq 1 ] && ([ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+	echo "Cannot have -P print option and -i info, -V verify or -I initizalize option at the same time";
 	exit 1;
 fi;
-# if tag is set, you can't have init, check, info, etc
-if [ ! -z "${ONE_TIME_TAG}" ] && ([ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${CHECK} -eq 1 ] || [ ${INFO} -eq 1 ]); then
-	echo "Cannot have -T '${ONE_TIME_TAG}' option with -i info, -C check, -I initialize or -P print option at the same time";
+# if tag is set, you can't have init, verify, info, etc
+if [ ! -z "${ONE_TIME_TAG}" ] && ([ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+	echo "Cannot have -T '${ONE_TIME_TAG}' option with -i info, -V verify, -I initialize or -P print option at the same time";
 	exit 1;
 fi;
-# check only alphanumeric, no spaces, only underscore and dash
+# verify only alphanumeric, no spaces, only underscore and dash
 if [ ! -z "${ONE_TIME_TAG}" ] && ! [[ "${ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+$ ]]; then
 	echo "One time tag '${ONE_TIME_TAG}' must be alphanumeric with dashes and underscore only.";
 	exit 1;
@@ -292,16 +314,32 @@ elif [ ! -z "${ONE_TIME_TAG}" ]; then
 	ONE_TIME_TAG=${ONE_TIME_TAG}".";
 fi;
 # if -D, cannot be with -T, -i, -C, -I, -P
-if [ ! -z "${DELETE_ONE_TIME_TAG}" ] && ([ ! -z "${ONE_TIME_TAG}" ] || [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${CHECK} -eq 1 ] || [ ${INFO} -eq 1 ]); then
-	echo "Cannot have -D delete tag option with -T one time tag, -i info, -C check, -I initialize or -P print option at the same time";
+if [ ! -z "${DELETE_ONE_TIME_TAG}" ] && ([ ! -z "${ONE_TIME_TAG}" ] || [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+	echo "Cannot have -D delete tag option with -T one time tag, -i info, -V verify, -I initialize or -P print option at the same time";
 	exit 1;
 fi;
 # -D also must be in valid backup set format
 # ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]
 if [ ! -z "${DELETE_ONE_TIME_TAG}" ] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},([A-Za-z0-9_-]+-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]; then
-	echo "Delete one time tag '${DELETE_ONE_TIME_TAG}' is in an invalid format. Please check existing tags with -P option."
+	echo "Delete one time tag '${DELETE_ONE_TIME_TAG}' is in an invalid format. "
+	echo "Please verify existing tags with -P option."
 	echo "For a globing be sure it is in the format of: TAG.MODULE,*-YYYY-MM-DDT*";
 	echo "Note the dash (-) after the first *, also time (T) is a globa (*) must."
+	exit 1;
+fi;
+# -y can't be set without -C
+if [ ${CHECK_VERIFY_DATA} -eq 1 ] && [ ${CHECK} -eq 0 ]; then
+	echo "-y (verify-data) cannot be run without -C (Check) option";
+	exit 1;
+fi;
+# -p can't be set without -C
+if [ ! -z "${CHECK_PREFIX}" ] && [ ${CHECK} -eq 0 ]; then
+	echo "-p (pattern|glob) for check cannot be run without -C (Check) options";
+	exit 1;
+fi;
+# can't have -e if VERIFY or INIT is not set
+if [ ${EXIT} -eq 1 ] && [ ${VERIFY} -eq 0 ] && [ ${INIT} -eq 0 ]; then
+	echo "-e (exit) can only be used with -V (Verify) and -I (Init)";
 	exit 1;
 fi;
 
@@ -319,6 +357,9 @@ if [ ${DRYRUN} -eq 1 ]; then
 	DRY_RUN_STATS="-n";
 else
 	DRY_RUN_STATS="-s";
+fi;
+if [ ${CHECK_VERIFY_DATA} -eq 1 ] && [ ${CHECK} -eq 1 ]; then
+	OPT_CHECK_VERIFY_DATA="--verify-data";
 fi;
 
 # read config file
@@ -339,12 +380,12 @@ elif [ ! -z "${BORG_EXECUTEABLE}" ]; then
 		exit;
 	fi;
 elif ! command -v borg &> /dev/null; then
-	echo "borg backup seems not to be installed, please check paths";
+	echo "borg backup seems not to be installed, please verify paths";
 	exit;
 fi;
-# check that this is a borg executable, no detail check
-_BORG_COMMAND_CHECK=$(${BORG_COMMAND} -V | grep "borg");
-if [[ "${_BORG_COMMAND_CHECK}" =~ ${REGEX_ERROR} ]]; then
+# verify that this is a borg executable, no detail check
+_BORG_COMMAND_VERIFY=$(${BORG_COMMAND} -V | grep "borg");
+if [[ "${_BORG_COMMAND_VERIFY}" =~ ${REGEX_ERROR} ]]; then
 	echo "Cannot extract borg info from command, is this a valid borg executable?: ${BORG_COMMAND}";
 	exit;
 fi;
@@ -363,8 +404,12 @@ fi;
 if [ -z "${ENCRYPTION}" ]; then
 	ENCRYPTION="${DEFAULT_ENCRYPTION}";
 fi;
-if [ -z "${FORCE_CHECK}" ]; then
-	FORCE_CHECK="${DEFAULT_FORCE_CHECK}";
+# deprecated name FORCE_CHECK, use FORCE_VERIFY instead
+if [ ! -z "${FORCE_CHECK}" ]; then
+	FORCE_VERIFY="${FORCE_CHECK}";
+fi;
+if [ -z "${FORCE_VERIFY}" ]; then
+	FORCE_VERIFY="${DEFAULT_FORCE_VERIFY}";
 fi;
 if [ -z "${KEEP_LAST}" ]; then
 	KEEP_LAST="${DEFAULT_KEEP_LAST}";

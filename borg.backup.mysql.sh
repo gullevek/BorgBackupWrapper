@@ -5,12 +5,9 @@
 # config override set in borg.backup.mysql.settings
 # if run as mysql user, be sure user is in the backup group
 
-# Run -I first to initialize repository
-# There are no automatic repository checks unless -C is given
-
 # set last edit date + time
 MODULE="mysql"
-MODULE_VERSION="1.1.0";
+MODULE_VERSION="1.1.1";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -21,11 +18,11 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 INCLUDE_FILE="borg.backup.mysql.include";
 EXCLUDE_FILE="borg.backup.mysql.exclude";
 SCHEMA_ONLY_FILE="borg.backup.mysql.schema-only";
-# init check file
-BACKUP_INIT_CHECK="borg.backup.mysql.init";
+# init verify file
+BACKUP_INIT_VERIFY="borg.backup.mysql.init";
 
-# check valid data
-. "${DIR}/borg.backup.functions.check.sh";
+# verify valid data
+. "${DIR}/borg.backup.functions.verify.sh";
 # if info print info and then abort run
 . "${DIR}/borg.backup.functions.info.sh";
 
@@ -50,10 +47,10 @@ if [ ! -f "${MYSQL_CMD}" ]; then
 	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
-# check that the user can actually do, else abort here
+# verify that the user can actually do, else abort here
 # note: this is the only way to not error
-_MYSQL_CHECK=$(mysqladmin ${MYSQL_DB_CONFIG_PARAM} ping 2>&1);
-_MYSQL_OK=$(echo "${_MYSQL_CHECK}" | grep "is alive");
+_MYSQL_VERIFY=$(mysqladmin ${MYSQL_DB_CONFIG_PARAM} ping 2>&1);
+_MYSQL_OK=$(echo "${_MYSQL_VERIFY}" | grep "is alive");
 if [ -z "${_MYSQL_OK}" ]; then
 	echo "[! $(date +'%F %T')] Current user has no access right to mysql database";
 	. "${DIR}/borg.backup.functions.close.sh" 1;

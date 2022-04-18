@@ -5,12 +5,9 @@
 # config override set in borg.backup.pgsql.settings
 # if run as postgres user, be sure user is in the backup group
 
-# Run -I first to initialize repository
-# There are no automatic repository checks unless -C is given
-
 # set last edit date + time
 MODULE="pgsql"
-MODULE_VERSION="1.2.0";
+MODULE_VERSION="1.2.1";
 
 
 DIR="${BASH_SOURCE%/*}"
@@ -23,11 +20,11 @@ INCLUDE_FILE="borg.backup.pgsql.include";
 EXCLUDE_FILE="borg.backup.pgsql.exclude";
 SCHEMA_ONLY_FILE="borg.backup.pgsql.schema-only";
 DATA_ONLY_FILE="borg.backup.pgsql.data-only";
-# init check file
-BACKUP_INIT_CHECK="borg.backup.pgsql.init";
+# init verify file
+BACKUP_INIT_VERIFY="borg.backup.pgsql.init";
 
-# check valid data
-. "${DIR}/borg.backup.functions.check.sh";
+# verify valid data
+. "${DIR}/borg.backup.functions.verify.sh";
 # if info print info and then abort run
 . "${DIR}/borg.backup.functions.info.sh";
 

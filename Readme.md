@@ -59,14 +59,23 @@ override the default borg executable found in path
 ### `-P`
 print list of archives created
 
-### `-C`
-check if repository exists, if not abort
+### `-V`
+verify if repository exists, if not abort
 
-### `-E`
+### `-e`
 exit after check
 
 ### `-I`
 init repository (must be run first)
+
+### `-C`
+run `borg check` over given repository
+
+#### `-y`
+Add `--verify-data` to `borg check`. Only works with `-C`
+
+#### `-p <prefix|glob>`
+Only `borg check` data that has given prefix or glob (with *). Only works with `-C`
 
 ### `-i`
 print out only info

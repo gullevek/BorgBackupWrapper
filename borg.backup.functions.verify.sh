@@ -3,7 +3,7 @@
 # start time in seconds
 START=$(date +'%s');
 # set init date, or today if not file is set
-BACKUP_INIT_DATE=$(printf '%(%c)T' $(cat "${BASE_FOLDER}${BACKUP_INIT_CHECK}" 2>/dev/null));
+BACKUP_INIT_DATE=$(printf '%(%c)T' $(cat "${BASE_FOLDER}${BACKUP_INIT_VERIFY}" 2>/dev/null));
 # start logging from here
 exec &> >(tee -a "${LOG}");
 echo "=== [START : $(date +'%F %T')] ==[${MODULE}]====================================>";
@@ -21,12 +21,12 @@ echo "Base folder     : ${BASE_FOLDER}";
 # Module init date (when init file was writen)
 echo "Module init date: ${BACKUP_INIT_DATE}";
 
-# if force check is true set CHECK to 1unless INFO is 1
+# if force verify is true set VERIFY to 1 unless INFO is 1
 # Needs bash 4.0 at lesat for this
-if [ "${FORCE_CHECK,,}" = "true" ] && [ ${INFO} -eq 0 ]; then
-	CHECK=1;
+if [ "${FORCE_VERIFY,,}" = "true" ] && [ ${INFO} -eq 0 ]; then
+	VERIFY=1;
 	if [ ${DEBUG} -eq 1 ]; then
-		echo "Force repository check";
+		echo "Force repository verify";
 	fi;
 fi;
 
@@ -84,7 +84,7 @@ fi;
 REPOSITORY="${TARGET_SERVER}${TARGET_FOLDER}${BACKUP_FILE}";
 echo "Repository      : ${REPOSITORY}";
 
-# check compression if given is valid and check compression level is valid if given
+# check if given compression name and level are valid
 OPT_COMPRESSION='';
 if [ ! -z "${COMPRESSION}" ]; then
 	# valid compression
@@ -150,7 +150,7 @@ if [ ! -z "${ONE_TIME_TAG}" ]; then
 else
 	# build options and info string,
 	# also flag BACKUP_SET check if hourly is set
-	BACKUP_SET_CHECK=0;
+	BACKUP_SET_VERIFY=0;
 	if [ ${KEEP_LAST} -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-last=${KEEP_LAST}");
 		KEEP_INFO="${KEEP_INFO}, last: ${KEEP_LAST}";
@@ -158,7 +158,7 @@ else
 	if [ ${KEEP_HOURS} -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-hourly=${KEEP_HOURS}");
 		KEEP_INFO="${KEEP_INFO}, hourly: ${KEEP_HOURS}";
-		BACKUP_SET_CHECK=1;
+		BACKUP_SET_VERIFY=1;
 	fi;
 	if [ ${KEEP_DAYS} -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-daily=${KEEP_DAYS}");
@@ -182,7 +182,7 @@ else
 			KEEP_OPTIONS+=("--keep-within=${KEEP_WITHIN}");
 			KEEP_INFO="${KEEP_INFO}, within: ${KEEP_WITHIN}";
 			if [[ "${KEEP_WITHIN}" == *"H"* ]]; then
-				BACKUP_SET_CHECK=1;
+				BACKUP_SET_VERIFY=1;
 			fi;
 		else
 			echo "[! $(date +'%F %T')] KEEP_WITHIN has invalid string.";
@@ -200,7 +200,7 @@ else
 	fi;
 	# backup set check, and there is no hour entry (%H) in the archive string
 	# we add T%H:%M:%S in this case, before the last }
-	if [ ${BACKUP_SET_CHECK} -eq 1 ] && [[ "${BACKUP_SET}" != *"%H"* ]]; then
+	if [ ${BACKUP_SET_VERIFY} -eq 1 ] && [[ "${BACKUP_SET}" != *"%H"* ]]; then
 		BACKUP_SET=$(echo "${BACKUP_SET}" | sed -e "s/}/T%H:%M:%S}/");
 	fi;
 fi;
@@ -235,39 +235,39 @@ fi;
 COMMAND_EXPORT="export BORG_BASE_DIR=\"${BASE_FOLDER}\";"
 COMMAND_INFO="${COMMAND_EXPORT}${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}";
 # if the is not there, call init to create it
-# if this is user@host, we need to use ssh command to check if the file is there
-# else a normal check is ok
-# unless explicit given, check is skipped
-if [ ${CHECK} -eq 1 ] || [ ${INIT} -eq 1 ]; then
-	echo "--- [CHECK : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+# if this is user@host, we need to use ssh command to verify if the file is there
+# else a normal verify is ok
+# unless explicit given, verify is skipped
+if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ]; then
+	echo "--- [VERIFY: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
 	if [ ! -z "${TARGET_SERVER}" ]; then
 		if [ ${DEBUG} -eq 1 ]; then
 			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
 		fi;
-		# use borg info and check if it returns "Repository ID:" in the first line
-		REPO_CHECK=$(${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep "Repository ID:");
+		# use borg info and verify if it returns "Repository ID:" in the first line
+		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep "Repository ID:");
 		# this is currently a hack to work round the error code in borg info
-		# this checks if REPO_CHECK holds this error message and then starts init
-		if [[ -z "${REPO_CHECK}" ]] || [[ "${REPO_CHECK}" =~ ${REGEX_ERROR} ]]; then
+		# this checks if REPO_VERIFY holds this error message and then starts init
+		if [[ -z "${REPO_VERIFY}" ]] || [[ "${REPO_VERIFY}" =~ ${REGEX_ERROR} ]]; then
 			INIT_REPOSITORY=1;
 		fi;
 	elif [ ! -d "${REPOSITORY}" ]; then
 		INIT_REPOSITORY=1;
 	fi;
-	# if check but no init and repo is there but init file is missing set it
-	if [ ${CHECK} -eq 1 ] && [ ${INIT} -eq 0 ] && [ ${INIT_REPOSITORY} -eq 0 ] &&
-		[ ! -f "${BASE_FOLDER}${BACKUP_INIT_CHECK}" ]; then
+	# if verrify but no init and repo is there but init file is missing set it
+	if [ ${VERIFY} -eq 1 ] && [ ${INIT} -eq 0 ] && [ ${INIT_REPOSITORY} -eq 0 ] &&
+		[ ! -f "${BASE_FOLDER}${BACKUP_INIT_VERIFY}" ]; then
 		# write init file
-		echo "[!] Add missing init check file";
-		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_CHECK}";
+		echo "[!] Add missing init verify file";
+		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_VERIFY}";
 	fi;
-	# end if checked but repository is not here
-	if [ ${CHECK} -eq 1 ] && [ ${INIT} -eq 0 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
+	# end if verified but repository is not here
+	if [ ${VERIFY} -eq 1 ] && [ ${INIT} -eq 0 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
 		echo "[! $(date +'%F %T')] No repository. Please run with -I flag to initialze repository";
 		. "${DIR}/borg.backup.functions.close.sh" 1;
 		exit 1;
 	fi;
-	if [ ${EXIT} -eq 1 ] && [ ${CHECK} -eq 1 ] && [ ${INIT} -eq 0 ]; then
+	if [ ${EXIT} -eq 1 ] && [ ${VERIFY} -eq 1 ] && [ ${INIT} -eq 0 ]; then
 		echo "Repository exists";
 		echo "For more information run:"
 		echo "${COMMAND_INFO}";
@@ -284,7 +284,7 @@ if [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
 		# should trap and exit properly here
 		${BORG_COMMAND} init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY};
 		# write init file
-		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_CHECK}";
+		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_VERIFY}";
 		echo "Repository initialized";
 		echo "For more information run:"
 		echo "${COMMAND_INFO}";
@@ -300,8 +300,8 @@ elif [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 0 ]; then
 	exit 1;
 fi;
 
-# check for init file
-if [ ! -f "${BASE_FOLDER}${BACKUP_INIT_CHECK}" ]; then
+# verify for init file
+if [ ! -f "${BASE_FOLDER}${BACKUP_INIT_VERIFY}" ]; then
 	echo "[! $(date +'%F %T')] It seems the repository has never been initialized."
 	echo "Please run -I to initialize or if already initialzed run with -C for init update."
 	. "${DIR}/borg.backup.functions.close.sh" 1;
@@ -333,6 +333,40 @@ if [ ${PRINT} -eq 1 ]; then
 		echo "Example: \"{mode} {user:6} {group:6} {size:8d} {csize:8d} {dsize:8d} {dcsize:8d} {mtime} {path}{extra} [{health}]{NL}\""
 	else
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} [COMMAND] ${OPT_REMOTE} [FORMAT] ${REPOSITORY}::[BACKUP] [PATH]";
+	fi;
+	. "${DIR}/borg.backup.functions.close.sh";
+	exit;
+fi;
+
+# run borg check command
+if [ ${CHECK} -eq 1 ]; then
+	echo "--- [CHECK : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	# repare command
+	OPT_GLOB="";
+	if [[ "${CHECK_PREFIX}" =~ $REGEX_GLOB ]]; then
+		OPT_GLOB="-a '${CHECK_PREFIX}'"
+	else
+		OPT_GLOB="-p ${CHECK_PREFIX}";
+	fi;
+	# debug/dryrun
+	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
+		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check -p ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY}";
+	fi;
+	# run info command if not a dry drun
+	if [ ${DRYRUN} -eq 0 ]; then
+		# if glob add glob command directly
+		if [[ "${CHECK_PREFIX}" =~ $REGEX_GLOB ]]; then
+		${BORG_COMMAND} check -p ${OPT_CHECK_VERIFY_DATA} -a "${CHECK_PREFIX}" ${REPOSITORY};
+		else
+			${BORG_COMMAND} check -p ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY};
+		fi;
+	fi;
+	# print additional info for use --repair command
+	if [ ${VERBOSE} -eq 1 ]; then
+		echo "";
+		echo "In case of repair: "
+		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check -p --repair ${OPT_GLOB} ${REPOSITORY}";
+		echo "Before running repair, a copy from the backup should be made because repair might damage a backup"
 	fi;
 	. "${DIR}/borg.backup.functions.close.sh";
 	exit;

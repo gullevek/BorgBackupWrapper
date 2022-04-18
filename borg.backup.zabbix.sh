@@ -3,18 +3,18 @@
 # Backup zabbix config and settings only
 
 MODULE="zabbix"
-MODULE_VERSION="1.1.1";
+MODULE_VERSION="1.1.2";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 # init system
 . "${DIR}/borg.backup.functions.init.sh";
 
-# init check file
-BACKUP_INIT_CHECK="borg.backup.zabbix.init";
+# init verify file
+BACKUP_INIT_VERIFY="borg.backup.zabbix.init";
 
-# check valid data
-. "${DIR}/borg.backup.functions.check.sh";
+# verify valid data
+. "${DIR}/borg.backup.functions.verify.sh";
 # if info print info and then abort run
 . "${DIR}/borg.backup.functions.info.sh";
 

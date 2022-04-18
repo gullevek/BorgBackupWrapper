@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+echo "${0} Currently not checked";
+exit;
+
 set -e -u -o pipefail
 
 # mount this servers borg backup to a folder
@@ -13,7 +16,7 @@ SETTINGS_FILE="borg.backup.settings";
 # base mount path (default)
 MOUNT_PATH="/mnt/restore/";
 # backup path to borg storage
-ATTIC_BACKUP_FILE='';
+BORG_BACKUP_FILE='';
 # if we are mount or unmount (default is mount)
 UMOUNT=0;
 
@@ -42,7 +45,7 @@ while getopts ":c:m:uf:h" opt do
 			UMOUNT=1;
 			;;
 		f|file)
-			ATTIC_BACKUP_FILE=${OPTARG};
+			BORG_BACKUP_FILE=${OPTARG};
 			;;
 		h|help)
 			usage;
@@ -69,7 +72,7 @@ fi;
 
 if [ ${UMOUNT} -eq 0 ]; then
 	TARGET_SERVER='';
-	if [ -z "${ATTIC_BACKUP_FILE}" ]; then
+	if [ -z "${BORG_BACKUP_FILE}" ]; then
 		if [ ! -f "${BASE_FOLDER}${SETTINGS_FILE}" ]; then
 			echo "Cannot find ${BASE_FOLDER}${SETTINGS_FILE}";
 			exit 0;
@@ -82,7 +85,7 @@ if [ ${UMOUNT} -eq 0 ]; then
 		fi;
 		REPOSITORY=${TARGET_SERVER}${TARGET_FOLDER}${BACKUP_FILE};
 	else
-		REPOSITORY=${ATTIC_BACKUP_FILE};
+		REPOSITORY=${BORG_BACKUP_FILE};
 	fi;
 
 	# check that the repostiory exists
