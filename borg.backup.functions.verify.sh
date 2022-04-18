@@ -345,8 +345,8 @@ if [ ${CHECK} -eq 1 ]; then
 	OPT_GLOB="";
 	if [[ "${CHECK_PREFIX}" =~ $REGEX_GLOB ]]; then
 		OPT_GLOB="-a '${CHECK_PREFIX}'"
-	else
-		OPT_GLOB="-p ${CHECK_PREFIX}";
+	elif [ ! -z "${CHECK_PREFIX}" ]; then
+		OPT_GLOB="-P ${CHECK_PREFIX}";
 	fi;
 	# debug/dryrun
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
