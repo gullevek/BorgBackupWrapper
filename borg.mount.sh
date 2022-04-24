@@ -115,4 +115,4 @@ else
 	borg umount "${MOUNT_PATH}";
 fi;
 
-## END
+# __END__

@@ -15,11 +15,14 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "${DIR}/borg.backup.functions.init.sh";
 
 # include and exclude file
-INCLUDE_FILE="borg.backup.mysql.include";
-EXCLUDE_FILE="borg.backup.mysql.exclude";
-SCHEMA_ONLY_FILE="borg.backup.mysql.schema-only";
-# init verify file
-BACKUP_INIT_VERIFY="borg.backup.mysql.init";
+INCLUDE_FILE="borg.backup.${MODULE}.include";
+EXCLUDE_FILE="borg.backup.${MODULE}.exclude";
+SCHEMA_ONLY_FILE="borg.backup.${MODULE}.schema-only";
+# init verify and check file
+BACKUP_INIT_FILE="borg.backup.${MODULE}.init";
+BACKUP_CHECK_FILE="borg.backup.${MODULE}.check";
+# lock file
+BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
 
 # verify valid data
 . "${DIR}/borg.backup.functions.verify.sh";
@@ -89,7 +92,7 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		SCHEMA_ONLY='--no-data';
 		schema_flag='schema';
 	fi;
-	echo "---[BACKUP: all databases: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "all databases" "$(date +'%F %T')" "${MODULE}";
 	# We only do a full backup and not per table backup here
 	# Filename
 	FILENAME="all-${schema_flag}-${DB_TYPE}_${DB_VERSION}_${DB_HOST}_${DB_PORT}.sql"
@@ -116,15 +119,15 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		fi;
 	fi;
 	if [ -z "${ONE_TIME_TAG}" ]; then
-		echo "--- [PRUNE : all databases: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+		printf "${PRINTF_SUBEXT_BLOCK}" "PRUNE" "all databases" "$(date +'%F %T')" "${MODULE}";
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
 else
 	${MYSQL_CMD} ${MYSQL_DB_CONFIG_PARAM} -B -N -e "show databases" |
 	while read db; do
-		echo "========[DB: ${db}]========================[${MODULE}]====================================>";
-		echo "--- [BACKUP: ${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+		printf "${PRINTF_DB_SUB_BLOCK}" "DB" "${db}" "${MODULE}";
+		printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "${db}" "$(date +'%F %T')" "${MODULE}";
 		# exclude checks
 		include=0;
 		if [ -s "${BASE_FOLDER}${INCLUDE_FILE}" ]; then
@@ -202,7 +205,7 @@ else
 				fi;
 			fi;
 			if [ -z "${ONE_TIME_TAG}" ]; then
-				echo "--- [PRUNE : ${db}: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+				printf "${PRINTF_SUBEXT_BLOCK}" "PRUNE" "${db}" "$(date +'%F %T')" "${MODULE}";
 				echo "Prune repository prefixed ${BACKUP_SET_PREFIX} with keep${KEEP_INFO:1}";
 				${BORG_PRUNE};
 			fi;
@@ -215,6 +218,8 @@ fi;
 if [ -z "${ONE_TIME_TAG}" ]; then
 	# if this is borg version >1.2 we need to run compact after prune
 	. "${DIR}/borg.backup.functions.compact.sh";
+	# check in auto mode
+	. "${DIR}/borg.backup.functions.check.sh" "auto";
 fi;
 
 . "${DIR}/borg.backup.functions.close.sh";

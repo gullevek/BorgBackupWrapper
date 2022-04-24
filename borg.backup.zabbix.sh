@@ -10,8 +10,11 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 # init system
 . "${DIR}/borg.backup.functions.init.sh";
 
-# init verify file
-BACKUP_INIT_VERIFY="borg.backup.zabbix.init";
+# init verify and check file
+BACKUP_INIT_FILE="borg.backup.${MODULE}.init";
+BACKUP_CHECK_FILE="borg.backup.${MODULE}.check";
+# lock file
+BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
 
 # verify valid data
 . "${DIR}/borg.backup.functions.verify.sh";
@@ -64,7 +67,7 @@ if [ -z "${BACKUP_SET_PREFIX}" ]; then
 	BORG_PRUNE=$(echo "${BORG_PRUNE}" | sed -e 's/-P //');
 fi;
 
-echo "--- [BACKUP: zabbix settings: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+printf "${PRINTF_SUB_BLOCK}" "BACKUP: zabbix settings" "$(date +'%F %T')" "${MODULE}";
 if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 	echo "${ZABBIX_DUMP_BIN} -t ${ZABBIX_DATABASE} ${OPT_ZABBIX_UNKNOWN_TABLES} ${OPT_ZABBIX_DUMP} ${OPT_ZABBIX_CONFIG} -o - | ${BORG_CALL}"
 	if [ -z "${ONE_TIME_TAG}" ]; then
@@ -75,10 +78,12 @@ if [ ${DRYRUN} -eq 0 ]; then
 	${ZABBIX_DUMP_BIN} -t ${ZABBIX_DATABASE} ${OPT_ZABBIX_UNKNOWN_TABLES} ${OPT_ZABBIX_DUMP} ${OPT_ZABBIX_CONFIG} -o - | ${BORG_CALL};
 fi;
 if [ -z "${ONE_TIME_TAG}" ]; then
-	echo "--- [PRUNE : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "PRUNE" "$(date +'%F %T')" "${MODULE}";
 	${BORG_PRUNE};
 	# if this is borg version >1.2 we need to run compact after prune
 	. "${DIR}/borg.backup.functions.compact.sh";
+	# check in auto mode
+	. "${DIR}/borg.backup.functions.check.sh" "auto";
 fi;
 
 . "${DIR}/borg.backup.functions.close.sh";

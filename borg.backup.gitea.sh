@@ -10,8 +10,11 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 # init system
 . "${DIR}/borg.backup.functions.init.sh";
 
-# init verify file
-BACKUP_INIT_VERIFY="borg.backup.gitea.init";
+# init verify and check file
+BACKUP_INIT_FILE="borg.backup.${MODULE}.init";
+BACKUP_CHECK_FILE="borg.backup.${MODULE}.check";
+# lock file
+BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
 
 # verify valid data
 . "${DIR}/borg.backup.functions.verify.sh";
@@ -54,7 +57,7 @@ BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${BACKUP_SET}";
 # borg call
 BORG_CALL=$(echo "${_BORG_CALL}" | sed -e "s/##FILENAME##/${FILENAME}/" | sed -e "s/##BACKUP_SET##/${BACKUP_SET_NAME}/");
 BORG_PRUNE=$(echo "${_BORG_PRUNE}" | sed -e "s/##BACKUP_SET_PREFIX##/${BACKUP_SET_PREFIX}/");
-echo "--- [git data and database: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+printf "${PRINTF_SUB_BLOCK}" "BACKUP: git data and database" "$(date +'%F %T')" "${MODULE}";
 if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 	echo "sudo -u ${GIT_USER} ${GITEA_BIN} dump -c ${GITEA_CONFIG} -w ${GITEA_TMP} -L -f - | ${BORG_CALL}";
 	if [ -z "${ONE_TIME_TAG}" ]; then
@@ -76,11 +79,13 @@ if [ ${DRYRUN} -eq 0 ]; then
 	) | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' # remove all ESC strings
 fi;
 if [ -z "${ONE_TIME_TAG}" ]; then
-	echo "--- [PRUNE : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "PRUNE" "$(date +'%F %T')" "${MODULE}";
 	echo "Prune repository with keep${KEEP_INFO:1}";
 	${BORG_PRUNE};
 	# if this is borg version >1.2 we need to run compact after prune
 	. "${DIR}/borg.backup.functions.compact.sh";
+	# check in auto mode
+	. "${DIR}/borg.backup.functions.check.sh" "auto";
 fi;
 
 . "${DIR}/borg.backup.functions.close.sh";

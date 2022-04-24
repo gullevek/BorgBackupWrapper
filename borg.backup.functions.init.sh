@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ -z "${MODULE}" ]; then
+	echo "Script cannot be run on its own";
+	exit 1;
+fi;
+
 set -ETu #-e -o pipefail
 trap cleanup SIGINT SIGTERM ERR
 
@@ -42,8 +47,10 @@ SETTINGS_FILE="borg.backup.settings";
 INCLUDE_FILE="";
 EXCLUDE_FILE="";
 # backup folder initialzed verify
-BACKUP_INIT_VERIFY="";
+BACKUP_INIT_FILE="";
 BACKUP_INIT_DATE="";
+# fiel with last check timestamp
+BACKUP_CHECK_FILE="";
 # one time backup prefix tag, if set will use <tag>.<prefix>-Y-M-DTh:m:s type backup prefix
 ONE_TIME_TAG="";
 DELETE_ONE_TIME_TAG="";
@@ -80,6 +87,12 @@ PRUNE_DEBUG="";
 INIT_REPOSITORY=0;
 FOLDER_OK=0;
 TMP_EXCLUDE_FILE="";
+# printf strings
+PRINTF_INFO_STRING="%-21s: %s\n";
+PRINTF_MASTER_BLOCK="=== [%-8s: %19s] ==[%s]====================================>\n";
+PRINTF_SUB_BLOCK="|-- [%-8s: %19s] --[%s]------------------------------------>\n";
+PRINTF_SUBEXT_BLOCK="|-- [%-8s: %s: %19s] --[%s]------------------------------------>\n";
+PRINTF_DB_SUB_BLOCK=">>- [%-8s: %s] =======================[%s]====================================>\n";
 # opt flags
 OPT_VERBOSE="";
 OPT_PROGRESS="";
@@ -114,6 +127,11 @@ ENCRYPTION="";
 DEFAULT_FORCE_VERIFY="false";
 FORCE_VERIFY="";
 FORCE_CHECK=""; # Deprecated name, use FORCE_VERIFY
+# default interval is none
+DEFAULT_CHECK_INTERVAL="";
+CHECK_INTERVAL="";
+SUB_CHECK_INTERVAL="";
+# backup set names
 BACKUP_SET="";
 SUB_BACKUP_SET="";
 # for database backup only
@@ -404,6 +422,9 @@ fi;
 if [ -z "${ENCRYPTION}" ]; then
 	ENCRYPTION="${DEFAULT_ENCRYPTION}";
 fi;
+if [ -z "${CHECK_INTERVAL}" ]; then
+	CHECK_INTERVAL="${DEFAULT_CHECK_INTERVAL}";
+fi;
 # deprecated name FORCE_CHECK, use FORCE_VERIFY instead
 if [ ! -z "${FORCE_CHECK}" ]; then
 	FORCE_VERIFY="${FORCE_CHECK}";
@@ -449,6 +470,10 @@ if [ -f "${BASE_FOLDER}${SETTINGS_FILE_SUB}" ]; then
 	fi;
 	if [ ! -z "${SUB_COMPRESSION_LEVEL}" ]; then
 		COMPRESSION_LEVEL=${SUB_COMPRESSION_LEVEL};
+	fi;
+	# override check interval
+	if [ ! -z "${SUB_CHECK_INTERVAL}" ]; then
+		CHECK_INTERVAL="${SUB_CHECK_INTERVAL}";
 	fi;
 	# check override for keep time
 	if [ ! -z "${SUB_KEEP_LAST}" ]; then
@@ -511,6 +536,8 @@ if [[ ${TARGET_FOLDER} =~ ^~\/ ]]; then
 	echo "TARGET_FOLDER path cannot start with ~/. Path must be absolute: ${TARGET_FOLDER}";
 	exit 1;
 fi
+
+# CHECK_INTERVAL must be a number from -1 to 365
 
 # log file set and check
 # option folder overrides all other folders

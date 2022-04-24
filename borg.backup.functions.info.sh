@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
+if [ -z "${MODULE}" ]; then
+	echo "Script cannot be run on its own";
+	exit 1;
+fi;
+
 if [ ${INFO} -eq 1 ]; then
-	echo "--- [INFO  : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "INFO" "$(date +'%F %T')" "${MODULE}";
 	# show command on debug or dry run
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}";

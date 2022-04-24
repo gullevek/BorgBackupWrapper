@@ -1,25 +1,47 @@
 #!/usr/bin/env bash
 
+if [ -z "${MODULE}" ]; then
+	echo "Script cannot be run on its own";
+	exit 1;
+fi;
+
 # start time in seconds
 START=$(date +'%s');
 # set init date, or today if not file is set
-BACKUP_INIT_DATE=$(printf '%(%c)T' $(cat "${BASE_FOLDER}${BACKUP_INIT_VERIFY}" 2>/dev/null));
+BACKUP_INIT_DATE='';
+if [ -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
+	BACKUP_INIT_DATE=$(printf '%(%c)T' $(cat "${BASE_FOLDER}${BACKUP_INIT_FILE}" 2>/dev/null));
+fi;
+# last check date if set
+BACKUP_LAST_CHECK_DATE='';
+LAST_CHECK_DATE='';
+CONVERT_TIME='';
+if [ -f "${BASE_FOLDER}${BACKUP_CHECK_FILE}" ]; then
+	LAST_CHECK_DATE=$(cat "${BASE_FOLDER}${BACKUP_CHECK_FILE}" 2>/dev/null);
+	BACKUP_LAST_CHECK_DATE=$(printf '%(%c)T' ${LAST_CHECK_DATE});
+	CONVERT_TIME=$(convert_time $(($(date +%s)-${LAST_CHECK_DATE})));
+fi;
 # start logging from here
 exec &> >(tee -a "${LOG}");
-echo "=== [START : $(date +'%F %T')] ==[${MODULE}]====================================>";
+printf "${PRINTF_MASTER_BLOCK}" "START" "$(date +'%F %T')" "${MODULE}";
 # show info for version always
-echo "Script version  : ${VERSION}";
+printf "${PRINTF_INFO_STRING}" "Script version" "${VERSION}";
 # show type
-echo "Backup module   : ${MODULE}";
-echo "Module version  : ${MODULE_VERSION}";
+printf "${PRINTF_INFO_STRING}" "Backup module" "${MODULE}";
+printf "${PRINTF_INFO_STRING}" "Module version" "${MODULE_VERSION}";
 # borg version
-echo "Borg version    : ${BORG_VERSION}";
+printf "${PRINTF_INFO_STRING}" "Borg version" "${BORG_VERSION}";
 # host name
-echo "Hostname        : ${HOSTNAME}";
+printf "${PRINTF_INFO_STRING}" "Hostname" "${HOSTNAME}";
 # show base folder always
-echo "Base folder     : ${BASE_FOLDER}";
+printf "${PRINTF_INFO_STRING}" "Base folder" "${BASE_FOLDER}";
 # Module init date (when init file was writen)
-echo "Module init date: ${BACKUP_INIT_DATE}";
+printf "${PRINTF_INFO_STRING}" "Module init date" "${BACKUP_INIT_DATE}";
+# print last check date if positive integer
+if [ "${CHECK_INTERVAL##*[!0-9]*}" ]; then
+	printf "${PRINTF_INFO_STRING}" "Module check interval" "${CHECK_INTERVAL}";
+	printf "${PRINTF_INFO_STRING}" "Module last check" "${BACKUP_LAST_CHECK_DATE} (${CONVERT_TIME} ago)";
+fi;
 
 # if force verify is true set VERIFY to 1 unless INFO is 1
 # Needs bash 4.0 at lesat for this
@@ -82,7 +104,7 @@ elif [ ! -z "${TARGET_HOST}" ]; then
 fi;
 # we dont allow special characters, so we don't need to special escape it
 REPOSITORY="${TARGET_SERVER}${TARGET_FOLDER}${BACKUP_FILE}";
-echo "Repository      : ${REPOSITORY}";
+printf "${PRINTF_INFO_STRING}" "Repository" "${REPOSITORY}";
 
 # check if given compression name and level are valid
 OPT_COMPRESSION='';
@@ -205,6 +227,22 @@ else
 	fi;
 fi;
 
+# check if we have lock file, check pid in lock file, if no matching pid found
+# running remove lock file
+if [ -f "${BASE_FOLDER}${BACKUP_LOCK_FILE}" ]; then
+	LOCK_PID=$(cat "${BASE_FOLDER}${BACKUP_LOCK_FILE}" 2>/dev/null);
+	# check if lock file pid has an active program attached to it
+	if [ -f /proc/${LOCK_PID}/cmdline ]; then
+		echo "Script is already running on PID: ${$}";
+		. "${DIR}/borg.backup.functions.close.sh" 1;
+		exit 1;
+	else
+		echo "[#] Clean up stale lock file for PID: ${LOCK_PID}";
+		rm "${BASE_FOLDER}${BACKUP_LOCK_FILE}";
+	fi;
+fi;
+echo "${$}" > "${BASE_FOLDER}${BACKUP_LOCK_FILE}";
+
 # for folders list split set to "#" and keep the old setting as is
 _IFS=${IFS};
 IFS="#";
@@ -239,7 +277,7 @@ COMMAND_INFO="${COMMAND_EXPORT}${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}"
 # else a normal verify is ok
 # unless explicit given, verify is skipped
 if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ]; then
-	echo "--- [VERIFY: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "VERIFY" "$(date +'%F %T')" "${MODULE}";
 	if [ ! -z "${TARGET_SERVER}" ]; then
 		if [ ${DEBUG} -eq 1 ]; then
 			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
@@ -256,10 +294,10 @@ if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ]; then
 	fi;
 	# if verrify but no init and repo is there but init file is missing set it
 	if [ ${VERIFY} -eq 1 ] && [ ${INIT} -eq 0 ] && [ ${INIT_REPOSITORY} -eq 0 ] &&
-		[ ! -f "${BASE_FOLDER}${BACKUP_INIT_VERIFY}" ]; then
+		[ ! -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
 		# write init file
 		echo "[!] Add missing init verify file";
-		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_VERIFY}";
+		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_FILE}";
 	fi;
 	# end if verified but repository is not here
 	if [ ${VERIFY} -eq 1 ] && [ ${INIT} -eq 0 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
@@ -276,7 +314,7 @@ if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ]; then
 	fi;
 fi;
 if [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
-	echo "--- [INIT  : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "INIT" "$(date +'%F %T')" "${MODULE}";
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 		echo "${BORG_COMMAND} init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY}";
 	fi
@@ -284,7 +322,7 @@ if [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
 		# should trap and exit properly here
 		${BORG_COMMAND} init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY};
 		# write init file
-		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_VERIFY}";
+		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_FILE}";
 		echo "Repository initialized";
 		echo "For more information run:"
 		echo "${COMMAND_INFO}";
@@ -301,7 +339,7 @@ elif [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 0 ]; then
 fi;
 
 # verify for init file
-if [ ! -f "${BASE_FOLDER}${BACKUP_INIT_VERIFY}" ]; then
+if [ ! -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
 	echo "[! $(date +'%F %T')] It seems the repository has never been initialized."
 	echo "Please run -I to initialize or if already initialzed run with -C for init update."
 	. "${DIR}/borg.backup.functions.close.sh" 1;
@@ -310,7 +348,7 @@ fi;
 
 # PRINT OUT current data, only do this if REPO exists
 if [ ${PRINT} -eq 1 ]; then
-	echo "--- [PRINT : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "PRINT" "$(date +'%F %T')" "${MODULE}";
 	FORMAT="{archive:<45} {comment:6} {start} - {end} [{id}] ({username}@{hostname}){NL}"
 	# show command on debug or dry run
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
@@ -338,43 +376,16 @@ if [ ${PRINT} -eq 1 ]; then
 	exit;
 fi;
 
-# run borg check command
+# run borg check command and exit
 if [ ${CHECK} -eq 1 ]; then
-	echo "--- [CHECK : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
-	# repare command
-	OPT_GLOB="";
-	if [[ "${CHECK_PREFIX}" =~ $REGEX_GLOB ]]; then
-		OPT_GLOB="-a '${CHECK_PREFIX}'"
-	elif [ ! -z "${CHECK_PREFIX}" ]; then
-		OPT_GLOB="-P ${CHECK_PREFIX}";
-	fi;
-	# debug/dryrun
-	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
-		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY}";
-	fi;
-	# run info command if not a dry drun
-	if [ ${DRYRUN} -eq 0 ]; then
-		# if glob add glob command directly
-		if [[ "${CHECK_PREFIX}" =~ $REGEX_GLOB ]]; then
-		${BORG_COMMAND} check ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} -a "${CHECK_PREFIX}" ${REPOSITORY};
-		else
-			${BORG_COMMAND} check ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY};
-		fi;
-	fi;
-	# print additional info for use --repair command
-	if [ ${VERBOSE} -eq 1 ]; then
-		echo "";
-		echo "In case of needed repair: "
-		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check ${OPT_PROGRESS} --repair ${OPT_GLOB} ${REPOSITORY}";
-		echo "Before running repair, a copy from the backup should be made because repair might damage a backup"
-	fi;
+	. "${DIR}/borg.backup.functions.check.sh";
 	. "${DIR}/borg.backup.functions.close.sh";
 	exit;
 fi;
 
 # DELETE ONE TIME TAG
 if [ ! -z "${DELETE_ONE_TIME_TAG}" ]; then
-	echo "--- [DELETE: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "DELETE" "$(date +'%F %T')" "${MODULE}";
 	# if a "*" is inside we don't do ONE archive, but globbing via -a option
 	DELETE_ARCHIVE=""
 	OPT_GLOB="";

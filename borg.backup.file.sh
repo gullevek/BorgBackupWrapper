@@ -11,10 +11,13 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "${DIR}/borg.backup.functions.init.sh";
 
 # include and exclude file
-INCLUDE_FILE="borg.backup.file.include";
-EXCLUDE_FILE="borg.backup.file.exclude";
-# init verify file
-BACKUP_INIT_VERIFY="borg.backup.file.init";
+INCLUDE_FILE="borg.backup.${MODULE}.include";
+EXCLUDE_FILE="borg.backup.${MODULE}.exclude";
+# init verify and check file
+BACKUP_INIT_FILE="borg.backup.${MODULE}.init";
+BACKUP_CHECK_FILE="borg.backup.${MODULE}.check";
+# lock file
+BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
 
 # verify valid data
 . "${DIR}/borg.backup.functions.verify.sh";
@@ -25,7 +28,7 @@ if [ ! -f "${BASE_FOLDER}${INCLUDE_FILE}" ]; then
 	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
 fi;
-echo "--- [INCLUDE: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+printf "${PRINTF_SUB_BLOCK}" "INCLUDE" "$(date +'%F %T')" "${MODULE}";
 # folders to backup
 FOLDERS=();
 # this if for debug output with quoted folders
@@ -90,7 +93,7 @@ done<"${BASE_FOLDER}${INCLUDE_FILE}";
 
 # exclude list
 if [ -f "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
-	echo "--- [EXCLUDE: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "EXCLUDE" "$(date +'%F %T')" "${MODULE}";
 	# check that the folders in that exclude file are actually valid,
 	# remove non valid ones and warn
 	#TMP_EXCLUDE_FILE=$(mktemp --tmpdir ${EXCLUDE_FILE}.XXXXXXXX); # non mac
@@ -159,7 +162,7 @@ COMMAND=${COMMAND}${REPOSITORY}::${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${BACKUP_SET
 . "${DIR}/borg.backup.functions.info.sh";
 
 if [ $FOLDER_OK -eq 1 ]; then
-	echo "--- [BACKUP: $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "BACKUP" "$(date +'%F %T')" "${MODULE}";
 	# show command
 	if [ ${DEBUG} -eq 1 ]; then
 		echo $(echo ${COMMAND} | sed -e 's/[ ][ ]*/ /g') ${FOLDERS_Q[*]};
@@ -182,7 +185,7 @@ fi;
 
 # clean up, always verbose, but only if we do not run one time tag
 if [ -z "${ONE_TIME_TAG}" ]; then
-	echo "--- [PRUNE : $(date +'%F %T')] --[${MODULE}]------------------------------------>";
+	printf "${PRINTF_SUB_BLOCK}" "PRUNE" "$(date +'%F %T')" "${MODULE}";
 	# build command
 	COMMAND="${BORG_COMMAND} prune ${OPT_REMOTE} -v --list ${OPT_PROGRESS} ${DRY_RUN_STATS} -P ${BACKUP_SET_PREFIX} ${KEEP_OPTIONS[*]} ${REPOSITORY}";
 	echo "Prune repository with keep${KEEP_INFO:1}";
@@ -193,6 +196,8 @@ if [ -z "${ONE_TIME_TAG}" ]; then
 	$(echo "${COMMAND}" | sed -e 's/[ ][ ]*/#/g') 2>&1 || echo "[!] Borg prune aborted";
 	# if this is borg version >1.2 we need to run compact after prune
 	. "${DIR}/borg.backup.functions.compact.sh";
+	# check in auto mode
+	. "${DIR}/borg.backup.functions.check.sh" "auto";
 else
 	echo "[#] No prune with tagged backup";
 fi;

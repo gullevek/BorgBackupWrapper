@@ -63,7 +63,7 @@ print list of archives created
 verify if repository exists, if not abort
 
 ### `-e`
-exit after check
+exit after running verify `-V`
 
 ### `-I`
 init repository (must be run first)
@@ -118,7 +118,8 @@ All below have default values if not set in the main settings file
  * COMPRESSION: zstd
  * COMPRESSION_LEVEL: 3
  * ENCRYPTION: none
- * FORCE_CHECK: false
+ * FORCE_VERIFY: false
+ * CHECK_INTERVAL: none
  * KEEP_LAST: 0
  * KEEP_HOURS: 0
  * KEEP_DAYS: 7
@@ -130,6 +131,7 @@ All module settings files can have the following prefixed with `SUB_` to overrid
  * SUB_BACKUP_FILE
  * SUB_COMPRESSION
  * SUB_COMPRESSION_LEVEL
+ * SUB_CHECK_INTERVAL
  * SUB_BACKUP_SET
  * SUB_KEEP_LAST
  * SUB_KEEP_HOURS
@@ -156,6 +158,14 @@ and `TARGET_BORG_PATH="";` if the target borg is in a non default path
 ## Override borg executable in `borg.backup.settings`
 
 `BORG_EXECUTABLE="<full path to borg>"`
+
+## Note on CHECK_INTERVAL and SUB_CHECK_INTERVAL
+
+If set to empty or 0 it will not run an automatic check. If set to 1 it will run a check after each backup. Any other value means days differente to the last check.
+
+Running check manually (`-C`) will not reset the last check timestamp.
+
+Automatic checks always add `--verify-data`, with manual `-C` the option `-y` has to be set.
 
 ## File backup settings
 
