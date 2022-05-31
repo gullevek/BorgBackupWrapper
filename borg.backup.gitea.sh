@@ -3,7 +3,7 @@
 # Backup gitea database, all git folders and gitea settings
 
 MODULE="gitea"
-MODULE_VERSION="1.1.2";
+MODULE_VERSION="1.1.3";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -76,7 +76,7 @@ if [ ${DRYRUN} -eq 0 ]; then
 		# this needs to be run in a folder that can be stat by git user
 		cd "${GITEA_TMP}";
 		sudo -u ${GIT_USER} ${GITEA_BIN} dump -c ${GITEA_CONFIG} -w ${GITEA_TMP} -L -f - | ${BORG_CALL};
-	) | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' # remove all ESC strings
+	) 2>&1 | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' # remove all ESC strings
 fi;
 if [ -z "${ONE_TIME_TAG}" ]; then
 	printf "${PRINTF_SUB_BLOCK}" "PRUNE" "$(date +'%F %T')" "${MODULE}";
