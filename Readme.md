@@ -68,6 +68,9 @@ exit after running verify `-V`
 ### `-I`
 init repository (must be run first)
 
+### `-Z`
+run `borg compact` over given repository
+
 ### `-C`
 run `borg check` over given repository
 
@@ -119,6 +122,7 @@ All below have default values if not set in the main settings file
  * COMPRESSION_LEVEL: 3
  * ENCRYPTION: none
  * FORCE_VERIFY: false
+ * COMPACT_INTERVAL: 1
  * CHECK_INTERVAL: none
  * KEEP_LAST: 0
  * KEEP_HOURS: 0
@@ -131,6 +135,7 @@ All module settings files can have the following prefixed with `SUB_` to overrid
  * SUB_BACKUP_FILE
  * SUB_COMPRESSION
  * SUB_COMPRESSION_LEVEL
+ * SUB_COMPACT_INTERVAL
  * SUB_CHECK_INTERVAL
  * SUB_BACKUP_SET
  * SUB_KEEP_LAST
@@ -259,3 +264,21 @@ ZABBIX_UNKNOWN_TABLES | '' | if set, changed to -f (force)
 ### Control files
 
 There are no control files for zabbix settings backup
+
+
+## File connection
+
+Running any of the commands below
+- borg.backup.file.sh
+- borg.backup.gitea.sh
+- borg.backup.mysql.sh
+- borg.backup.pgsql.sh
+- borg.backup.zabbix.sh
+
+1) Run `borg.backup.functions.init.sh` (always)
+2) Run `borg.backup.functions.verify.sh` (always)
+3) (other code in "file" module)
+4) Run `borg.backup.functions.info.sh` (always)
+5) Run `borg.backup.functions.compact.sh` (not if one time tag)
+6) Run `borg.backup.functions.check.sh` (not if one time tag)
+7) Run `borg.backup.functions.close.sh` (always, can be called on error too)

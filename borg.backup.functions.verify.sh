@@ -12,15 +12,6 @@ BACKUP_INIT_DATE='';
 if [ -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
 	BACKUP_INIT_DATE=$(printf '%(%c)T' $(cat "${BASE_FOLDER}${BACKUP_INIT_FILE}" 2>/dev/null));
 fi;
-# last check date if set
-BACKUP_LAST_CHECK_DATE='';
-LAST_CHECK_DATE='';
-CONVERT_TIME='';
-if [ -f "${BASE_FOLDER}${BACKUP_CHECK_FILE}" ]; then
-	LAST_CHECK_DATE=$(cat "${BASE_FOLDER}${BACKUP_CHECK_FILE}" 2>/dev/null);
-	BACKUP_LAST_CHECK_DATE=$(printf '%(%c)T' ${LAST_CHECK_DATE});
-	CONVERT_TIME=$(convert_time $(($(date +%s)-${LAST_CHECK_DATE})));
-fi;
 # start logging from here
 exec &> >(tee -a "${LOG}");
 printf "${PRINTF_MASTER_BLOCK}" "START" "$(date +'%F %T')" "${MODULE}";
@@ -37,10 +28,31 @@ printf "${PRINTF_INFO_STRING}" "Hostname" "${HOSTNAME}";
 printf "${PRINTF_INFO_STRING}" "Base folder" "${BASE_FOLDER}";
 # Module init date (when init file was writen)
 printf "${PRINTF_INFO_STRING}" "Module init date" "${BACKUP_INIT_DATE}";
+# print last compact date if positive integer
+# only if borg > 1.2
+if [ $(version $BORG_VERSION) -ge $(version "1.2.0") ]; then
+	if [ "${COMPACT_INTERVAL##*[!0-9]*}" ]; then
+		printf "${PRINTF_INFO_STRING}" "Module compact interval" "${COMPACT_INTERVAL}";
+		if [ -f "${BASE_FOLDER}${BACKUP_COMPACT_FILE}" ]; then
+			LAST_COMPACT_DATE=$(cat "${BASE_FOLDER}${BACKUP_COMPACT_FILE}" 2>/dev/null);
+			printf "${PRINTF_INFO_STRING}" "Module last compact" \
+				"$(printf '%(%c)T' ${LAST_COMPACT_DATE}) ($(convert_time $(($(date +%s)-${LAST_COMPACT_DATE}))) ago)";
+		else
+			printf "${PRINTF_INFO_STRING}" "Module last compact" "No compact run yet"
+		fi;
+	fi;
+fi;
 # print last check date if positive integer
 if [ "${CHECK_INTERVAL##*[!0-9]*}" ]; then
 	printf "${PRINTF_INFO_STRING}" "Module check interval" "${CHECK_INTERVAL}";
-	printf "${PRINTF_INFO_STRING}" "Module last check" "${BACKUP_LAST_CHECK_DATE} (${CONVERT_TIME} ago)";
+	# get last check date
+	if [ -f "${BASE_FOLDER}${BACKUP_CHECK_FILE}" ]; then
+		LAST_CHECK_DATE=$(cat "${BASE_FOLDER}${BACKUP_CHECK_FILE}" 2>/dev/null);
+		printf "${PRINTF_INFO_STRING}" "Module last check" \
+			"$(printf '%(%c)T' ${LAST_CHECK_DATE}) ($(convert_time $(($(date +%s)-${LAST_CHECK_DATE}))) ago)";
+	else
+		printf "${PRINTF_INFO_STRING}" "Module last check" "No check run yet";
+	fi;
 fi;
 
 # if force verify is true set VERIFY to 1 unless INFO is 1
@@ -372,6 +384,13 @@ if [ ${PRINT} -eq 1 ]; then
 	else
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} [COMMAND] ${OPT_REMOTE} [FORMAT] ${REPOSITORY}::[BACKUP] [PATH]";
 	fi;
+	. "${DIR}/borg.backup.functions.close.sh";
+	exit;
+fi;
+
+# run borg compact command and exit
+if [ ${COMPACT} -eq 1 ]; then
+	. "${DIR}/borg.backup.functions.compact.sh";
 	. "${DIR}/borg.backup.functions.close.sh";
 	exit;
 fi;

@@ -4,7 +4,7 @@
 
 # set last edit date + time
 MODULE="file";
-MODULE_VERSION="1.2.1";
+MODULE_VERSION="1.2.2";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -13,8 +13,9 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 # include and exclude file
 INCLUDE_FILE="borg.backup.${MODULE}.include";
 EXCLUDE_FILE="borg.backup.${MODULE}.exclude";
-# init verify and check file
+# init verify, compact and check file
 BACKUP_INIT_FILE="borg.backup.${MODULE}.init";
+BACKUP_COMPACT_FILE="borg.backup.${MODULE}.compact";
 BACKUP_CHECK_FILE="borg.backup.${MODULE}.check";
 # lock file
 BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
@@ -195,7 +196,7 @@ if [ -z "${ONE_TIME_TAG}" ]; then
 	# for the IFS="#" to work we need to replace options spaces with exactly ONE #
 	$(echo "${COMMAND}" | sed -e 's/[ ][ ]*/#/g') 2>&1 || echo "[!] Borg prune aborted";
 	# if this is borg version >1.2 we need to run compact after prune
-	. "${DIR}/borg.backup.functions.compact.sh";
+	. "${DIR}/borg.backup.functions.compact.sh" "auto";
 	# check in auto mode
 	. "${DIR}/borg.backup.functions.check.sh" "auto";
 else

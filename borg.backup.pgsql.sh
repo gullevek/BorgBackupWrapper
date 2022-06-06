@@ -7,7 +7,7 @@
 
 # set last edit date + time
 MODULE="pgsql"
-MODULE_VERSION="1.2.1";
+MODULE_VERSION="1.2.2";
 
 
 DIR="${BASH_SOURCE%/*}"
@@ -20,8 +20,9 @@ INCLUDE_FILE="borg.backup.${MODULE}.include";
 EXCLUDE_FILE="borg.backup.${MODULE}.exclude";
 SCHEMA_ONLY_FILE="borg.backup.${MODULE}.schema-only";
 DATA_ONLY_FILE="borg.backup.${MODULE}.data-only";
-# init verify and check file
+# init verify, compact and check file
 BACKUP_INIT_FILE="borg.backup.${MODULE}.init";
+BACKUP_COMPACT_FILE="borg.backup.${MODULE}.compact";
 BACKUP_CHECK_FILE="borg.backup.${MODULE}.check";
 # lock file
 BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
@@ -269,7 +270,7 @@ fi;
 # run compact at the end if not a dry run
 if [ -z "${ONE_TIME_TAG}" ]; then
 	# if this is borg version >1.2 we need to run compact after prune
-	. "${DIR}/borg.backup.functions.compact.sh";
+	. "${DIR}/borg.backup.functions.compact.sh" "auto";
 	# check in auto mode
 	. "${DIR}/borg.backup.functions.check.sh" "auto";
 fi;

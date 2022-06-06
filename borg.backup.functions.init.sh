@@ -24,7 +24,7 @@ function version {
 }
 
 # version for all general files
-VERSION="4.3.0";
+VERSION="4.4.0";
 
 # borg version and borg comamnd
 BORG_VERSION="";
@@ -49,7 +49,9 @@ EXCLUDE_FILE="";
 # backup folder initialzed verify
 BACKUP_INIT_FILE="";
 BACKUP_INIT_DATE="";
-# fiel with last check timestamp
+# file with last compact date
+BACKUP_COMPACT_FILE="";
+# file with last check timestamp
 BACKUP_CHECK_FILE="";
 # one time backup prefix tag, if set will use <tag>.<prefix>-Y-M-DTh:m:s type backup prefix
 ONE_TIME_TAG="";
@@ -65,6 +67,7 @@ INFO=0;
 VERIFY=0;
 CHECK=0;
 CHECK_VERIFY_DATA=0;
+COMPACT=0;
 INIT=0;
 EXIT=0;
 PRINT=0;
@@ -88,7 +91,7 @@ INIT_REPOSITORY=0;
 FOLDER_OK=0;
 TMP_EXCLUDE_FILE="";
 # printf strings
-PRINTF_INFO_STRING="%-21s: %s\n";
+PRINTF_INFO_STRING="%-23s: %s\n";
 PRINTF_MASTER_BLOCK="=== [%-8s: %19s] ==[%s]====================================>\n";
 PRINTF_SUB_BLOCK="|-- [%-8s: %19s] --[%s]------------------------------------>\n";
 PRINTF_SUBEXT_BLOCK="|-- [%-8s: %s: %19s] --[%s]------------------------------------>\n";
@@ -127,6 +130,11 @@ ENCRYPTION="";
 DEFAULT_FORCE_VERIFY="false";
 FORCE_VERIFY="";
 FORCE_CHECK=""; # Deprecated name, use FORCE_VERIFY
+# compact
+DEFAULT_COMPACT_INTERVAL="1";
+COMPACT_INTERVAL="";
+SUB_COMPACT_INTERVAL="";
+# check
 # default interval is none
 DEFAULT_CHECK_INTERVAL="";
 CHECK_INTERVAL="";
@@ -192,6 +200,7 @@ function usage()
 	-T <tag>: create one time stand alone backup prefixed with tag name
 	-D <tag backup set>: remove a tagged backup set, full name must be given
 	-b <borg executable>: override default path
+	-Z: run compress after prune/backup. Only for borg 1.2 or newer
 	-C: run borg check if repository is ok
 	-y: in combination with -C: add --verify-data
 	-p <archive prefix|glob>: in combinatio with -C: only check archives with prefix or glob
@@ -213,7 +222,7 @@ function usage()
 }
 
 # set options
-while getopts ":c:L:T:D:b:p:vldniCVeIPyh" opt; do
+while getopts ":c:L:T:D:b:p:vldniCVeIPyZh" opt; do
 	case "${opt}" in
 		c|config)
 			BASE_FOLDER=${OPTARG};
@@ -229,6 +238,10 @@ while getopts ":c:L:T:D:b:p:vldniCVeIPyh" opt; do
 			;;
 		b|borg)
 			OPT_BORG_EXECUTEABLE=${OPTARG};
+			;;
+		Z|Compact)
+			# will run compact alone
+			COMPACT=1;
 			;;
 		C|Check)
 			# will run borg check
@@ -422,6 +435,10 @@ fi;
 if [ -z "${ENCRYPTION}" ]; then
 	ENCRYPTION="${DEFAULT_ENCRYPTION}";
 fi;
+# check interval override
+if [ -z "${COMPACT_INTERVAL}" ]; then
+	COMPACT_INTERVAL="${DEFAULT_COMPACT_INTERVAL}";
+fi;
 if [ -z "${CHECK_INTERVAL}" ]; then
 	CHECK_INTERVAL="${DEFAULT_CHECK_INTERVAL}";
 fi;
@@ -470,6 +487,10 @@ if [ -f "${BASE_FOLDER}${SETTINGS_FILE_SUB}" ]; then
 	fi;
 	if [ ! -z "${SUB_COMPRESSION_LEVEL}" ]; then
 		COMPRESSION_LEVEL=${SUB_COMPRESSION_LEVEL};
+	fi;
+	# compact interval override
+	if [ ! -z "${SUB_COMPACT_INTERVAL}" ]; then
+		COMPACT_INTERVAL="${SUB_COMPACT_INTERVAL}";
 	fi;
 	# override check interval
 	if [ ! -z "${SUB_CHECK_INTERVAL}" ]; then
@@ -537,6 +558,7 @@ if [[ ${TARGET_FOLDER} =~ ^~\/ ]]; then
 	exit 1;
 fi
 
+# COMPACT_INTERVAL must be a number from -1 to 365
 # CHECK_INTERVAL must be a number from -1 to 365
 
 # log file set and check

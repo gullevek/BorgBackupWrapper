@@ -27,8 +27,14 @@ COMPRESSION_LEVEL="";
 # Blank passwords allowed for only key (if used, use keyfile)
 # See: http://borgbackup.readthedocs.io/en/stable/faq.html#how-can-i-specify-the-encryption-passphrase-programmatically
 ENCRYPTION="";
-# force repository verirfy, default is off, set to true for verify on every run
+# force repository verify, default is off, set to true for verify on every run
 FORCE_VERIFY="";
+# compact interval, only if using borg 1.2 or higher
+# after how many days to run compress on data
+# default is 1 for run after each prune
+# set to 0 or negative to turn off
+# or any other value for every n days
+COMPACT_INTERVAL="";
 # check interval, if 0 or negative number, no check will ever run
 # if empty fall back to default set
 # if set to 1 then every time the script runs

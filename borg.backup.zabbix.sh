@@ -3,15 +3,16 @@
 # Backup zabbix config and settings only
 
 MODULE="zabbix"
-MODULE_VERSION="1.1.2";
+MODULE_VERSION="1.1.3";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 # init system
 . "${DIR}/borg.backup.functions.init.sh";
 
-# init verify and check file
+# init verify, compact and check file
 BACKUP_INIT_FILE="borg.backup.${MODULE}.init";
+BACKUP_COMPACT_FILE="borg.backup.${MODULE}.compact";
 BACKUP_CHECK_FILE="borg.backup.${MODULE}.check";
 # lock file
 BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
@@ -81,7 +82,7 @@ if [ -z "${ONE_TIME_TAG}" ]; then
 	printf "${PRINTF_SUB_BLOCK}" "PRUNE" "$(date +'%F %T')" "${MODULE}";
 	${BORG_PRUNE};
 	# if this is borg version >1.2 we need to run compact after prune
-	. "${DIR}/borg.backup.functions.compact.sh";
+	. "${DIR}/borg.backup.functions.compact.sh" "auto";
 	# check in auto mode
 	. "${DIR}/borg.backup.functions.check.sh" "auto";
 fi;
