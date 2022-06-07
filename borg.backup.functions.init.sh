@@ -132,11 +132,13 @@ FORCE_VERIFY="";
 FORCE_CHECK=""; # Deprecated name, use FORCE_VERIFY
 # compact
 DEFAULT_COMPACT_INTERVAL="1";
+LAST_COMPACT_DATE="";
 COMPACT_INTERVAL="";
 SUB_COMPACT_INTERVAL="";
 # check
 # default interval is none
 DEFAULT_CHECK_INTERVAL="";
+LAST_CHECK_DATE="";
 CHECK_INTERVAL="";
 SUB_CHECK_INTERVAL="";
 # backup set names
