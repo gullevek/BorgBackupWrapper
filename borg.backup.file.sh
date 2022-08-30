@@ -92,8 +92,8 @@ while read include_folder; do
 	fi;
 done<"${BASE_FOLDER}${INCLUDE_FILE}";
 
-# exclude list
-if [ -f "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
+# exclude list, only if file exists and is larger than zero
+if [ -s "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
 	printf "${PRINTF_SUB_BLOCK}" "EXCLUDE" "$(date +'%F %T')" "${MODULE}";
 	# check that the folders in that exclude file are actually valid,
 	# remove non valid ones and warn
@@ -147,7 +147,7 @@ if [ -f "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
 		fi;
 	done<"${BASE_FOLDER}${EXCLUDE_FILE}";
 	# avoid blank file add by checking if the tmp file has a size >0
-	if [ -s "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
+	if [ -s "${TMP_EXCLUDE_FILE}" ]; then
 		OPT_EXCLUDE="--exclude-from=${TMP_EXCLUDE_FILE}";
 	fi;
 fi;
