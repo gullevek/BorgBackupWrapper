@@ -4,7 +4,7 @@
 
 # set last edit date + time
 MODULE="file";
-MODULE_VERSION="1.2.2";
+MODULE_VERSION="1.2.3";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
