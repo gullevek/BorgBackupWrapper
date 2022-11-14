@@ -6,3 +6,4 @@ borg.backup.*.include
 borg.backup.*.exclude
 borg.backup.*.schema-only
 borg.backup.*.init
+borg.backup.*.compact
