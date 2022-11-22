@@ -413,6 +413,7 @@ elif [ ! -z "${BORG_EXECUTEABLE}" ]; then
 		exit;
 	fi;
 elif ! command -v borg &> /dev/null; then
+# elif [ -z ($command -v borg) ]; then
 	echo "borg backup seems not to be installed, please verify paths";
 	exit;
 fi;
