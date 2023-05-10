@@ -46,7 +46,7 @@ if [ $(version $BORG_VERSION) -ge $(version "1.2.0") ]; then
 		# reset to normal IFS, so command works here
 		IFS=${_IFS};
 		printf "${PRINTF_SUB_BLOCK}" "COMPACT" "$(date +'%F %T')" "${MODULE}";
-		BORG_COMPACT="${BORG_COMMAND} compact -v ${OPT_PROGRESS} ${REPOSITORY}";
+		BORG_COMPACT="${BORG_COMMAND} compact ${OPT_REMOTE} -v ${OPT_PROGRESS} ${REPOSITORY}";
 		if [ ${DEBUG} -eq 1 ]; then
 				echo "${BORG_COMPACT}";
 		fi;

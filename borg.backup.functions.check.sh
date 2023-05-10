@@ -59,15 +59,15 @@ if [ ${RUN_CHECK} -eq 1 ]; then
 	fi;
 	# debug/dryrun
 	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
-		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY}";
+		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY}";
 	fi;
 	# run info command if not a dry drun
 	if [ ${DRYRUN} -eq 0 ]; then
 		# if glob add glob command directly
 		if [[ "${CHECK_PREFIX}" =~ $REGEX_GLOB ]]; then
-		${BORG_COMMAND} check ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} -a "${CHECK_PREFIX}" ${REPOSITORY};
+		${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} -a "${CHECK_PREFIX}" ${REPOSITORY};
 		else
-			${BORG_COMMAND} check ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY};
+			${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY};
 		fi;
 	fi;
 	# print additional info for use --repair command
@@ -75,7 +75,7 @@ if [ ${RUN_CHECK} -eq 1 ]; then
 	if [ ${VERBOSE} -eq 1 ] && [ ${CHECK} -eq 1 ]; then
 		echo "";
 		echo "In case of needed repair: "
-		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check ${OPT_PROGRESS} --repair ${OPT_GLOB} ${REPOSITORY}";
+		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} --repair ${OPT_GLOB} ${REPOSITORY}";
 		echo "Before running repair, a copy from the backup should be made because repair might damage a backup"
 	fi;
 fi;

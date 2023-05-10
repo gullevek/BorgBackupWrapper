@@ -434,10 +434,10 @@ if [ ! -z "${DELETE_ONE_TIME_TAG}" ]; then
 	# not that compact only works on borg 1.2
 	if [ $(version $BORG_VERSION) -ge $(version "1.2.0") ]; then
 		if [ ${DRYRUN} -eq 0 ]; then
-			${BORG_COMMAND} compact ${REPOSITORY};
+			${BORG_COMMAND} compact ${OPT_REMOTE} ${REPOSITORY};
 		fi;
 		if [ ${DEBUG} -eq 1 ]; then
-			echo "${BORG_COMMAND} compact ${REPOSITORY}";
+			echo "${BORG_COMMAND} compact ${OPT_REMOTE} ${REPOSITORY}";
 		fi;
 	fi;
 	. "${DIR}/borg.backup.functions.close.sh";
