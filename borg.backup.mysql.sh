@@ -93,6 +93,7 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		SCHEMA_ONLY='--no-data';
 		schema_flag='schema';
 	fi;
+	LOCAL_START=$(date +'%s');
 	printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "all databases" "$(date +'%F %T')" "${MODULE}";
 	# We only do a full backup and not per table backup here
 	# Filename
@@ -124,9 +125,12 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
+	DURATION=$[ $(date +'%s')-$LOCAL_START ];
+	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "databases" "${MODULE}" "$(convert_time ${DURATION})";
 else
 	${MYSQL_CMD} ${MYSQL_DB_CONFIG_PARAM} -B -N -e "show databases" |
 	while read db; do
+		LOCAL_START=$(date +'%s');
 		printf "${PRINTF_DB_SUB_BLOCK}" "DB" "${db}" "${MODULE}";
 		printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "${db}" "$(date +'%F %T')" "${MODULE}";
 		# exclude checks
@@ -213,6 +217,8 @@ else
 		else
 			echo "- [E] ${db}";
 		fi;
+		DURATION=$[ $(date +'%s')-$LOCAL_START ];
+		printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 	done;
 fi;
 # run compact at the end if not a dry run

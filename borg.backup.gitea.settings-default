@@ -2,10 +2,8 @@
 
 # rename to borg.backup.gitea.settings to use
 
-# override settings in borg.backup.settings with SUB_ prefix
-# valid for BACKUP_FILE, BACKUP_SET, COMPRESSION*, KEEP_*
-
 GIT_USER="";
-GITEA_TMP="";
+GITEA_WORKING_DIR="";
+GITEA_TEMP_DIR="";
 GITEA_BIN="";
 GITEA_CONFIG="";

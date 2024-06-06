@@ -102,6 +102,7 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		SCHEMA_ONLY='-s';
 		schema_flag='schema';
 	fi;
+	LOCAL_START=$(date +'%s');
 	printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "all databases" "$(date +'%F %T')" "${MODULE}";
 	# Filename
 	FILENAME-"all.${DB_USER}.NONE.${schema_flag}-${DB_VERSION}_${DB_HOST}_${DB_PORT}.c.sql"
@@ -132,10 +133,13 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
+	DURATION=$[ $(date +'%s')-$LOCAL_START ];
+	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "databases" "${MODULE}" "$(convert_time ${DURATION})";
 else
 	# dump globals first
 	db="pg_globals";
 	schema_flag="data";
+	LOCAL_START=$(date +'%s');
 	printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "${db}" "$(date +'%F %T')" "${MODULE}";
 	# Filename
 	FILENAME="${db}.${DB_USER}.NONE.${schema_flag}-${DB_VERSION}_${DB_HOST}_${DB_PORT}.c.sql"
@@ -166,9 +170,11 @@ else
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
+	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "BACKUP" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 
 	# get list of tables
 	for owner_db in $(${PG_PSQL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -d template1 -t -A -F "," -X -q -c "SELECT pg_catalog.pg_get_userbyid(datdba) AS owner, datname, pg_catalog.pg_encoding_to_char(encoding) AS encoding FROM pg_catalog.pg_database WHERE datname "\!"~ 'template(0|1)' ORDER BY datname;"); do
+		LOCAL_START=$(date +'%s');
 		# get the user who owns the DB too
 		owner=$(echo ${owner_db} | cut -d "," -f 1);
 		db=$(echo ${owner_db} | cut -d "," -f 2);
@@ -265,6 +271,7 @@ else
 		else
 			echo "- [E] ${db}";
 		fi;
+		printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 	done;
 fi;
 # run compact at the end if not a dry run
