@@ -24,7 +24,7 @@ function version {
 }
 
 # version for all general files
-VERSION="4.4.0";
+VERSION="4.5.3";
 
 # borg version and borg comamnd
 BORG_VERSION="";
@@ -95,8 +95,8 @@ PRINTF_INFO_STRING="%-23s: %s\n";
 PRINTF_MASTER_BLOCK="=== [%-8s: %19s] ==[%s]====================================>\n";
 PRINTF_SUB_BLOCK="|-- [%-8s: %19s] --[%s]------------------------------------>\n";
 PRINTF_SUBEXT_BLOCK="|-- [%-8s: %s: %19s] --[%s]------------------------------------>\n";
-PRINTF_DB_SUB_BLOCK=">>- [%-8s: %s] ==[%s]=======================>\n";
-PRINTF_DB_RUN_TIME_SUB_BLOCK=">>- [%-8s: %s] ==[%s]==[Run time: %s:]=======================>\n";
+PRINTF_DB_SUB_BLOCK="|>- [%-8s: %s] ==[%s]=======================>\n";
+PRINTF_DB_RUN_TIME_SUB_BLOCK=">>- [%-8s: %s] ==[%s]==[Run time: %s]=======================>\n";
 # opt flags
 OPT_VERBOSE="";
 OPT_PROGRESS="";
