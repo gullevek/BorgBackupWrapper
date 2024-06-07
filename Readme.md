@@ -220,10 +220,10 @@ The postgres user must be added to the backup group for this, so that the basic 
 
 ### PostgreSQL Config variables
 
-Variable | Default | Description
+| Variable | Default | Description |
 | - | - | - |
-DATABASE_FULL_DUMP | | if empty, dump per databse, if set dump all in one file, if set to schema dump only schema
-DATABASE_USER | | overide username to connect to database
+| DATABASE_FULL_DUMP | | if empty, dump per databse, if set dump all in one file, if set to schema dump only schema |
+| DATABASE_USER | | overide username to connect to database |
 
 ### PostgreSQL Control files
 
@@ -239,10 +239,10 @@ If non root ident authentication run is used, be sure that the `mysql` user is i
 
 ### MySQL Config variables
 
-Variable | Default | Description
+| Variable | Default | Description |
 | - | - | - |
-DATABASE_FULL_DUMP | | if empty, dump per databse, if set dump all in one file, if set to schema dump only schema
-MYSQL_DB_CONFIG | | override file for connection. In modern mariaDB installations it is rcommended to run the script as root or mysql user and use the ident authentication instead.
+| DATABASE_FULL_DUMP | | if empty, dump per databse, if set dump all in one file, if set to schema dump only schema |
+| MYSQL_DB_CONFIG | | override file for connection. In modern mariaDB installations it is rcommended to run the script as root or mysql user and use the ident authentication instead. |
 
 ### MySQLControl files
 
@@ -259,12 +259,13 @@ This user is neede to create the temporary dump folder and access for the git fi
 
 ### gitea Config Variables
 
-Variable | Default | Description
+| Variable | Default | Description |
 | - | - | - |
-GIT_USER | git | The user that runs gitea |
-GITEA_TMP | /tmp/gitea/ | Where the temporary dump files from the backup are stored, as user git |
-GITEA_BIN | /usr/local/bin/gitea | Where the gitea binary is located |
-GITEA_CONFIG | /etc/gitea/app.ini | The configuration file for gitea |
+| GIT_USER | git | The user that runs gitea |
+| GITEA_WORKING_DIR | /var/tmp/gitea/ | Where the temporary dump files from the backup are stored, as user git |
+| GITEA_TEMP_DIR | /var/tmp/ | General temporary folder |
+| GITEA_BIN | /usr/local/bin/gitea | Where the gitea binary is located |
+| GITEA_CONFIG | /etc/gitea/app.ini | The configuration file for gitea |
 
 ### gitea Control files
 
@@ -274,12 +275,12 @@ There are no control files for gitea backup
 
 ### zabbix Config Variables
 
-Variable | Default | Description
+| Variable | Default | Description |
 | - | - | - |
-ZABBIX_DUMP | /usr/local/bin/zabbix-dump |
-ZABBIX_DATABASE | '' | Must be set as either psql or mysql
-ZABBIX_CONFIG | '' | if not set uses default location
-ZABBIX_UNKNOWN_TABLES | '' | if set, changed to -f (force)
+| ZABBIX_DUMP | /usr/local/bin/zabbix-dump | |
+| ZABBIX_DATABASE | '' | Must be set as either psql or mysql |
+| ZABBIX_CONFIG | '' | if not set uses default location |
+| ZABBIX_UNKNOWN_TABLES | '' | if set, changed to -f (force) |
 
 ### zabbix Control files
 
