@@ -126,7 +126,7 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		${BORG_PRUNE};
 	fi;
 	DURATION=$[ $(date +'%s')-$LOCAL_START ];
-	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "databases" "${MODULE}" "$(convert_time ${DURATION})";
+	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "all databases" "${MODULE}" "$(convert_time ${DURATION})";
 else
 	${MYSQL_CMD} ${MYSQL_DB_CONFIG_PARAM} -B -N -e "show databases" |
 	while read db; do
