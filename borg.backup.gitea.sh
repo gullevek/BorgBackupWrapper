@@ -3,7 +3,7 @@
 # Backup gitea database, all git folders and gitea settings
 
 MODULE="gitea"
-MODULE_VERSION="1.1.4";
+MODULE_VERSION="1.2.0";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi

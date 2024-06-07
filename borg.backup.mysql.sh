@@ -7,7 +7,7 @@
 
 # set last edit date + time
 MODULE="mysql"
-MODULE_VERSION="1.1.2";
+MODULE_VERSION="1.1.3";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
