@@ -7,7 +7,7 @@
 
 # set last edit date + time
 MODULE="pgsql"
-MODULE_VERSION="1.2.3";
+MODULE_VERSION="1.2.4";
 
 
 DIR="${BASH_SOURCE%/*}"
@@ -170,6 +170,7 @@ else
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
+	DURATION=$[ $(date +'%s')-$LOCAL_START ];
 	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "BACKUP" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 
 	# get list of tables
@@ -271,6 +272,7 @@ else
 		else
 			echo "- [E] ${db}";
 		fi;
+		DURATION=$[ $(date +'%s')-$LOCAL_START ];
 		printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 	done;
 fi;
