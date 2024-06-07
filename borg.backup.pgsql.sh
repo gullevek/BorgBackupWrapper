@@ -7,7 +7,7 @@
 
 # set last edit date + time
 MODULE="pgsql"
-MODULE_VERSION="1.2.4";
+MODULE_VERSION="1.2.5";
 
 
 DIR="${BASH_SOURCE%/*}"
@@ -105,7 +105,7 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 	LOCAL_START=$(date +'%s');
 	printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "all databases" "$(date +'%F %T')" "${MODULE}";
 	# Filename
-	FILENAME-"all.${DB_USER}.NONE.${schema_flag}-${DB_VERSION}_${DB_HOST}_${DB_PORT}.c.sql"
+	FILENAME="all.${DB_USER}.NONE.${schema_flag}-${DB_VERSION}_${DB_HOST}_${DB_PORT}.c.sql"
 	# backup set:
 	BACKUP_SET_PREFIX="${MODULE},all-";
 	BACKUP_SET_NAME="${ONE_TIME_TAG}${BACKUP_SET_PREFIX}${schema_flag}-${BACKUP_SET}";
