@@ -3,7 +3,7 @@
 # Backup gitea database, all git folders and gitea settings
 
 MODULE="gitea"
-MODULE_VERSION="1.2.0";
+MODULE_VERSION="1.2.1";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -91,7 +91,7 @@ if [ ${DRYRUN} -eq 0 ]; then
 		if [ ! -d "${GITEA_WORKING_DIR}" ]; then
 			mkdir -p "${GITEA_WORKING_DIR}";
 		fi;
-		chown -R ${GIT_USER}. "${GITEA_WORKING_DIR}";
+		chown -R ${GIT_USER}: "${GITEA_WORKING_DIR}";
 		# this needs to be run in a folder that can be stat by git user
 		cd "${GITEA_WORKING_DIR}";
 		sudo -u ${GIT_USER} ${GITEA_BIN} dump -c ${GITEA_CONFIG} -w ${GITEA_WORKING_DIR} -t ${GITEA_TEMP_DIR} --type ${GITEA_EXPORT_TYPE} -L -f - | ${BORG_CALL};
