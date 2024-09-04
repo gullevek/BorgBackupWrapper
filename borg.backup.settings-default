@@ -40,12 +40,15 @@ COMPACT_INTERVAL="";
 # if set to 1 then every time the script runs
 # any other value it means ever n days, eg 90 would be every 90 days
 CHECK_INTERVAL="";
-# default is %Y-%m-%d
+# default is {now:%Y-%m-%d}
 # todays date, if more than one per day add -%H%M for hour/minute
 # it can also be "{hostname}-{user}-{now:%Y-%m-%dT%H:%M:%S.%f}"
 BACKUP_SET="";
 # prune times, how many are kept in each time frame
+KEEP_LAST="";
+KEEP_HOURS="";
 KEEP_DAYS="";
 KEEP_WEEKS="";
 KEEP_MONTHS="";
 KEEP_YEARS="";
+KEEP_WITHIN="";
