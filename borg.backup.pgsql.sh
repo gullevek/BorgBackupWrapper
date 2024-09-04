@@ -32,7 +32,7 @@ BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
 # if info print info and then abort run
 . "${DIR}/borg.backup.functions.info.sh";
 
-if [ ! -z "${DATABASE_USER}" ]; then
+if [ -n "${DATABASE_USER}" ]; then
 	DB_USER=${DATABASE_USER};
 else
 	DB_USER='postgres';
@@ -95,7 +95,7 @@ CONN_DB_HOST=''; # -h <host>
 CONN_DB_PORT=''; # -p <port>
 
 # ALL IN ONE FILE or PER DATABASE FLAG
-if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
+if [ -n "${DATABASE_FULL_DUMP}" ]; then
 	SCHEMA_ONLY='';
 	schema_flag='data';
 	if [ "${DATABASE_FULL_DUMP}" = "schema" ]; then

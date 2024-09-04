@@ -7,7 +7,7 @@ fi;
 
 # compact (only if BORG COMPACT is set)
 # only for borg 1.2
-if [ $(version $BORG_VERSION) -ge $(version "1.2.0") ]; then
+if [ "$(version "$BORG_VERSION")" -ge "$(version "1.2.0")" ]; then
 	RUN_COMPACT=0;
 	if [ $# -ge 1 ] && [ "$1" = "auto" ]; then
 		# strip any spaces and convert to int
@@ -18,11 +18,11 @@ if [ $(version $BORG_VERSION) -ge $(version "1.2.0") ]; then
 		fi;
 		# get current date timestmap
 		CURRENT_DATE=$(date +%s);
-		if [ ${COMPACT_INTERVAL} -eq 1 ]; then
+		if [ "${COMPACT_INTERVAL}" -eq 1 ]; then
 			RUN_COMPACT=1;
 			# set new compact time here
-			echo ${CURRENT_DATE} > "${BASE_FOLDER}${BACKUP_COMPACT_FILE}";
-		elif [ ${COMPACT_INTERVAL} -gt 1 ]; then
+			echo "${CURRENT_DATE}" > "${BASE_FOLDER}${BACKUP_COMPACT_FILE}";
+		elif [ "${COMPACT_INTERVAL}" -gt 1 ]; then
 			# else load last timestamp and check if today - last time stamp > days
 			if [ -z "${LAST_COMPACT_DATE}" ]; then
 				LAST_COMPACT_DATE=$(cat "${BASE_FOLDER}${BACKUP_COMPACT_FILE}" 2>/dev/null | sed -e 's/ //g');
@@ -32,25 +32,26 @@ if [ $(version $BORG_VERSION) -ge $(version "1.2.0") ]; then
 				LAST_COMPACT_DATE=0;
 			fi;
 			# if the difference greate than compact date, run. COMPACT INTERVAL is in days
-			if [ $(($CURRENT_DATE-$LAST_COMPACT_DATE)) -ge $((${COMPACT_INTERVAL}*86400)) ]; then
+			if [ $((CURRENT_DATE-LAST_COMPACT_DATE)) -ge $((COMPACT_INTERVAL*86400)) ]; then
 				RUN_COMPACT=1;
 				# set new compact time here
-				echo ${CURRENT_DATE} > "${BASE_FOLDER}${BACKUP_COMPACT_FILE}";
+				echo "${CURRENT_DATE}" > "${BASE_FOLDER}${BACKUP_COMPACT_FILE}";
 			fi;
 		fi;
-	elif [ ${COMPACT} -eq 1 ]; then
+	elif [ "${COMPACT}" -eq 1 ]; then
 		RUN_COMPACT=1;
 	fi;
 
 	if [ ${RUN_COMPACT} -eq 1 ]; then
 		# reset to normal IFS, so command works here
 		IFS=${_IFS};
+		# shellcheck disable=SC2059
 		printf "${PRINTF_SUB_BLOCK}" "COMPACT" "$(date +'%F %T')" "${MODULE}";
 		BORG_COMPACT="${BORG_COMMAND} compact ${OPT_REMOTE} -v ${OPT_PROGRESS} ${REPOSITORY}";
-		if [ ${DEBUG} -eq 1 ]; then
+		if [ "${DEBUG}" -eq 1 ]; then
 				echo "${BORG_COMPACT}";
 		fi;
-		if [ ${DRYRUN} -eq 0 ]; then
+		if [ "${DRYRUN}" -eq 0 ]; then
 			${BORG_COMPACT};
 		fi;
 	fi;

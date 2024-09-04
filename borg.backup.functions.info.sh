@@ -5,21 +5,21 @@ if [ -z "${MODULE}" ]; then
 	exit 1;
 fi;
 
-if [ ${INFO} -eq 1 ]; then
+if [ "${INFO}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "INFO" "$(date +'%F %T')" "${MODULE}";
 	# show command on debug or dry run
-	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
+	if [ "${DEBUG}" -eq 1 ] || [ "${DRYRUN}" -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}";
 	fi;
 	# run info command if not a dry drun
-	if [ ${DRYRUN} -eq 0 ]; then
+	if [ "${DRYRUN}" -eq 0 ]; then
 		${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY};
 	fi;
 	if [ "${MODULE}" = "files" ]; then
-		if [ $FOLDER_OK -eq 1 ]; then
+		if [ "$FOLDER_OK" -eq 1 ]; then
 			echo "--- [Run command]:";
 			#IFS="#";
-			echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${COMMAND} "${FOLDERS_Q[*]};
+			echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${COMMAND} ${FOLDERS_Q[*]}";
 		else
 			echo "[!] No folders where set for the backup";
 		fi;

@@ -54,7 +54,7 @@ if [ ${RUN_CHECK} -eq 1 ]; then
 	OPT_GLOB="";
 	if [[ "${CHECK_PREFIX}" =~ $REGEX_GLOB ]]; then
 		OPT_GLOB="-a '${CHECK_PREFIX}'"
-	elif [ ! -z "${CHECK_PREFIX}" ]; then
+	elif [ -n "${CHECK_PREFIX}" ]; then
 		OPT_GLOB="-P ${CHECK_PREFIX}";
 	fi;
 	# debug/dryrun

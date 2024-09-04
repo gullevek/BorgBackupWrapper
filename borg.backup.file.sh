@@ -45,7 +45,7 @@ while read include_folder; do
 		echo "# [C] Comment: '${include_folder}'";
 	else
 		# skip if it is empty
-		if [ ! -z "${include_folder}" ]; then
+		if [ -n "${include_folder}" ]; then
 			# if this is a glob, do a double check that the base folder actually exists (?)
 			if [[ "${include_folder}" =~ $REGEX_GLOB ]]; then
 				# if this is */ then allow it
@@ -99,7 +99,7 @@ if [ -s "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
 	# remove non valid ones and warn
 	#TMP_EXCLUDE_FILE=$(mktemp --tmpdir ${EXCLUDE_FILE}.XXXXXXXX); # non mac
 	TMP_EXCLUDE_FILE=$(mktemp "${TEMPDIR}${EXCLUDE_FILE}".XXXXXXXX);
-	while read exclude_folder; do
+	while read -r exclude_folder; do
 		# strip any leading spaces from that folder
 		exclude_folder=$(echo "${exclude_folder}" | sed -e 's/^[ \t]*//');
 		# folder or any type of file is ok
@@ -108,7 +108,7 @@ if [ -s "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
 			echo "# [C] Comment: '${exclude_folder}'";
 		else
 			# skip if it is empty
-			if [ ! -z "${exclude_folder}" ]; then
+			if [ -n "${exclude_folder}" ]; then
 				# if it DOES NOT start with a / we assume free folder and add as is
 				if [[ "${exclude_folder}" != /* ]]; then
 					echo "${exclude_folder}" >> ${TMP_EXCLUDE_FILE};

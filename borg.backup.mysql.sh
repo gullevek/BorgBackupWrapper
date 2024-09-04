@@ -86,7 +86,7 @@ EVENTDB="mysql"
 EVENTS="--events"
 
 # ALL IN ONE FILE or PER DATABASE FLAG
-if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
+if [ -n "${DATABASE_FULL_DUMP}" ]; then
 	SCHEMA_ONLY='';
 	schema_flag='data';
 	if [ "${DATABASE_FULL_DUMP}" = "schema" ]; then

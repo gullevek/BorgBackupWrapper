@@ -33,7 +33,7 @@ function usage ()
 }
 
 # set options
-while getopts ":c:m:uf:h" opt do
+while getopts ":c:m:uf:h" opt; do
 	case "${opt}" in
 		c|config)
 			BASE_FOLDER=${OPTARG};
@@ -80,7 +80,7 @@ if [ ${UMOUNT} -eq 0 ]; then
 		. ${BASE_FOLDER}${SETTINGS_FILE}
 		# set the borg backup file base on the settings data
 		# if we have user/host then we build the ssh command
-		if [ ! -z "${TARGET_USER}" ] && [ ! -z "${TARGET_HOST}" ]; then
+		if [ -n "${TARGET_USER}" ] && [ -n "${TARGET_HOST}" ]; then
 			TARGET_SERVER=${TARGET_USER}"@"${TARGET_HOST}":";
 		fi;
 		REPOSITORY=${TARGET_SERVER}${TARGET_FOLDER}${BACKUP_FILE};
@@ -90,7 +90,7 @@ if [ ${UMOUNT} -eq 0 ]; then
 
 	# check that the repostiory exists
 	REPOSITORY_OK=0;
-	if [ ! -z "${TARGET_SERVER}" ]; then
+	if [ -n "${TARGET_SERVER}" ]; then
 		# remove trailing : for this
 		TARGET_SERVER=${TARGET_SERVER/:};
 		# use ssh command to check remote existense
