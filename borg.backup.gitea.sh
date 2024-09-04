@@ -34,7 +34,7 @@ if [ -z "${GITEA_WORKING_DIR}" ]; then
 	GITEA_WORKING_DIR="/var/tmp/gitea/";
 fi;
 # general temp folder for temporary data storage, this is not working output folder
-if [ -z "${GITEA_TEMP_DIR}"]; then
+if [ -z "${GITEA_TEMP_DIR}" ]; then
 	GITEA_TEMP_DIR="/var/tmp";
 fi;
 if [ -z "${GITEA_BIN}" ]; then
