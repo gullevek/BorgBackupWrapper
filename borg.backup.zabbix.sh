@@ -37,6 +37,7 @@ fi;
 if [ "${ZABBIX_DATABASE}" = "psql" ]; then
 	OPT_ZABBIX_DUMP="-C";
 fi;
+ZABBIX_DB_PORT="";
 if [ -n "${ZABBIX_DB_PORT}" ]; then
 	ZABBIX_DB_PORT="-P 5432";
 fi;
