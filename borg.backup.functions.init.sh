@@ -163,9 +163,11 @@ ZABBIX_DUMP_BIN="";
 ZABBIX_CONFIG="";
 ZABBIX_DATABASE="";
 ZABBIX_UNKNOWN_TABLES="";
+ZABBIX_DB_PORT="";
 OPT_ZABBIX_DUMP="";
 OPT_ZABBIX_CONFIG="";
 OPT_ZABBIX_UNKNOWN_TABLES="";
+OPT_ZABBIX_DB_PORT="";
 # default keep 7 days, 4 weeks, 6 months, 1 year
 # if set 0, ignore/off
 # note that for last/hourly it is needed to create a different
