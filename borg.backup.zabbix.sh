@@ -37,8 +37,9 @@ fi;
 if [ "${ZABBIX_DATABASE}" = "psql" ]; then
 	OPT_ZABBIX_DUMP="-C";
 fi;
-if [ -z "${ZABBIX_DB_PORT}" ]; then
-	ZABBIX_DB_PORT="5432";
+OPT_ZABBIX_DB_PORT="";
+if [ -n "${ZABBIX_DB_PORT}" ]; then
+	OPT_ZABBIX_DB_PORT="-P ${ZABBIX_DB_PORT}";
 fi;
 if [ "${ZABBIX_DATABASE}" != "psql" ] && [ "${ZABBIX_DATABASE}" != "mysql" ]; then
 	echo "[! $(date +'%F %T')] Zabbix dump must have database set to either psql or mysql";
@@ -73,13 +74,13 @@ fi;
 
 printf "${PRINTF_SUB_BLOCK}" "BACKUP: zabbix settings" "$(date +'%F %T')" "${MODULE}";
 if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
-	echo "${ZABBIX_DUMP_BIN} -t ${ZABBIX_DATABASE} ${OPT_ZABBIX_UNKNOWN_TABLES} ${OPT_ZABBIX_DUMP} ${OPT_ZABBIX_CONFIG} -o - | ${BORG_CALL}"
+	echo "${ZABBIX_DUMP_BIN} ${OPT_ZABBIX_DB_PORT} -t ${ZABBIX_DATABASE} ${OPT_ZABBIX_UNKNOWN_TABLES} ${OPT_ZABBIX_DUMP} ${OPT_ZABBIX_CONFIG} -o - | ${BORG_CALL}"
 	if [ -z "${ONE_TIME_TAG}" ]; then
 		echo "${BORG_PRUNE}";
 	fi;
 fi;
 if [ ${DRYRUN} -eq 0 ]; then
-	${ZABBIX_DUMP_BIN} -P ${ZABBIX_DB_PORT} -t ${ZABBIX_DATABASE} ${OPT_ZABBIX_UNKNOWN_TABLES} ${OPT_ZABBIX_DUMP} ${OPT_ZABBIX_CONFIG} -o - | ${BORG_CALL};
+	${ZABBIX_DUMP_BIN} ${OPT_ZABBIX_DB_PORT} -t ${ZABBIX_DATABASE} ${OPT_ZABBIX_UNKNOWN_TABLES} ${OPT_ZABBIX_DUMP} ${OPT_ZABBIX_CONFIG} -o - | ${BORG_CALL};
 fi;
 if [ -z "${ONE_TIME_TAG}" ]; then
 	printf "${PRINTF_SUB_BLOCK}" "PRUNE" "$(date +'%F %T')" "${MODULE}";
