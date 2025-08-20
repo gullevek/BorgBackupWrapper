@@ -15,3 +15,5 @@ ZABBIX_DATABASE="";
 ZABBIX_CONFIG="";
 # unknown tables, default ignore, is set to true, will force backup them
 ZABBIX_UNKNOWN_TABLES="";
+# overide zabbix db port read from zabbix config, if not set read from zabbix config
+ZABBIX_DB_PORT="";
