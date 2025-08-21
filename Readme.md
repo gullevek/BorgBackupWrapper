@@ -273,6 +273,8 @@ There are no control files for gitea backup
 
 ## zabbix config backup settings
 
+The `zabbix-dump` dump script must be installed from: <https://github.com/gullevek/zabbix-backup>
+
 ### zabbix Config Variables
 
 | Variable | Default | Description |
@@ -281,6 +283,7 @@ There are no control files for gitea backup
 | ZABBIX_DATABASE | '' | Must be set as either psql or mysql |
 | ZABBIX_CONFIG | '' | if not set uses default location |
 | ZABBIX_UNKNOWN_TABLES | '' | if set, changed to -f (force) |
+| ZABBIX_DB_PORT | '' | if set, sets -P parameter on zabbix backup script to override auto get from zabbix server config |
 
 ### zabbix Control files
 
