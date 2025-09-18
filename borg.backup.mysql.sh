@@ -62,10 +62,11 @@ if [ -z "${_MYSQL_OK}" ]; then
 fi;
 # below is for file name only
 # set DB_VERSION (Distrib n.n.n-type)
-# NEW: mysql  Ver 15.1 Distrib 10.5.12-MariaDB, for debian-linux-gnu (x86_64) using  EditLine wrapper
-# OLD: mysql  Ver 14.14 Distrib 5.7.35, for Linux (x86_64) using  EditLine wrapper
+# OLD:     mysql  Ver 14.14 Distrib 5.7.35, for Linux (x86_64) using  EditLine wrapper
+# NEW:     mysql  Ver 15.1 Distrib 10.5.12-MariaDB, for debian-linux-gnu (x86_64) using  EditLine wrapper
+# VARIANT: mysql from 11.8.3-MariaDB, client 15.2 for debian-linux-gnu (x86_64) using  EditLine wrapper
 _DB_VERSION_TYPE=$("${MYSQL_CMD}" --version);
-_DB_VERSION=$(echo "${_DB_VERSION_TYPE}" | sed 's/.*Distrib \([0-9]\{1,\}\.[0-9]\{1,\}\)\.[0-9]\{1,\}.*/\1/');
+_DB_VERSION=$(echo "${_DB_VERSION_TYPE}" | sed 's/.*\(Distrib\|from\) \([0-9]\{1,\}\.[0-9]\{1,\}\)\.[0-9]\{1,\}.*/\2/');
 DB_VERSION=$(echo "${_DB_VERSION}" | cut -d " " -f 1);
 # temporary until correct type detection is set
 DB_TYPE="mysql";
