@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 # Backup zabbix config and settings only
 
 MODULE="zabbix"

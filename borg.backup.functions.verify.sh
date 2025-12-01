@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 if [ -z "${MODULE}" ]; then
 	echo "Script cannot be run on its own";
 	exit 1;
@@ -10,7 +13,7 @@ START=$(date +'%s');
 # set init date, or today if not file is set
 BACKUP_INIT_DATE='';
 if [ -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
-	BACKUP_INIT_DATE=$(printf '%(%c)T' $(cat "${BASE_FOLDER}${BACKUP_INIT_FILE}" 2>/dev/null));
+	BACKUP_INIT_DATE=$(printf '%(%c)T' "$(cat "${BASE_FOLDER}${BACKUP_INIT_FILE}" 2>/dev/null)");
 fi;
 # start logging from here
 exec &> >(tee -a "${LOG}");
@@ -36,7 +39,7 @@ if [ "$(version "$BORG_VERSION")" -ge "$(version "1.2.0")" ]; then
 		if [ -f "${BASE_FOLDER}${BACKUP_COMPACT_FILE}" ]; then
 			LAST_COMPACT_DATE=$(cat "${BASE_FOLDER}${BACKUP_COMPACT_FILE}" 2>/dev/null);
 			printf "${PRINTF_INFO_STRING}" "Module last compact" \
-				"$(printf '%(%c)T' ${LAST_COMPACT_DATE}) ($(convert_time $(($(date +%s)-${LAST_COMPACT_DATE}))) ago)";
+				"$(printf '%(%c)T' "${LAST_COMPACT_DATE}") ($(convert_time $(($(date +%s) - LAST_COMPACT_DATE))) ago)";
 		else
 			printf "${PRINTF_INFO_STRING}" "Module last compact" "No compact run yet"
 		fi;
@@ -49,7 +52,7 @@ if [ "${CHECK_INTERVAL##*[!0-9]*}" ]; then
 	if [ -f "${BASE_FOLDER}${BACKUP_CHECK_FILE}" ]; then
 		LAST_CHECK_DATE=$(cat "${BASE_FOLDER}${BACKUP_CHECK_FILE}" 2>/dev/null);
 		printf "${PRINTF_INFO_STRING}" "Module last check" \
-			"$(printf '%(%c)T' ${LAST_CHECK_DATE}) ($(convert_time $(($(date +%s)-${LAST_CHECK_DATE}))) ago)";
+			"$(printf '%(%c)T' "${LAST_CHECK_DATE}") ($(convert_time $(($(date +%s) - LAST_CHECK_DATE))) ago)";
 	else
 		printf "${PRINTF_INFO_STRING}" "Module last check" "No check run yet";
 	fi;
@@ -152,10 +155,10 @@ if [ -n "${COMPRESSION}" ]; then
 			# fi;
 			error_message="[! $(date +'%F %T')] Compression level for ${COMPRESSION} needs to be a numeric value between ${MIN_COMPRESSION} and ${MAX_COMPRESSION}: ${COMPRESSION_LEVEL}";
 			if ! [[ "${COMPRESSION_LEVEL}" =~ ${REGEX_NUMERIC} ]]; then
-				echo ${error_message};
+				echo "${error_message}";
 				exit 1;
-			elif [ ${COMPRESSION_LEVEL} -lt ${MIN_COMPRESSION} ] || [ ${COMPRESSION_LEVEL} -gt ${MAX_COMPRESSION} ]; then
-				echo ${error_message};
+			elif [ "${COMPRESSION_LEVEL}" -lt "${MIN_COMPRESSION}" ] || [ "${COMPRESSION_LEVEL}" -gt "${MAX_COMPRESSION}" ]; then
+				echo "${error_message}";
 				exit 1;
 			else
 				OPT_COMPRESSION=${OPT_COMPRESSION}","${COMPRESSION_LEVEL};
@@ -288,6 +291,7 @@ COMMAND_INFO="${COMMAND_EXPORT}${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}"
 # if this is user@host, we need to use ssh command to verify if the file is there
 # else a normal verify is ok
 # unless explicit given, verify is skipped
+# MARK: VERIFY / INFO
 if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "VERIFY" "$(date +'%F %T')" "${MODULE}";
 	if [ -n "${TARGET_SERVER}" ]; then
@@ -295,7 +299,7 @@ if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
 		fi;
 		# use borg info and verify if it returns "Repository ID:" in the first line
-		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep "Repository ID:");
+		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}" 2>&1|grep "Repository ID:");
 		# this is currently a hack to work round the error code in borg info
 		# this checks if REPO_VERIFY holds this error message and then starts init
 		if [[ -z "${REPO_VERIFY}" ]] || [[ "${REPO_VERIFY}" =~ ${REGEX_ERROR} ]]; then
@@ -325,14 +329,29 @@ if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 		exit;
 	fi;
 fi;
+# MARK: INIT
 if [ "${INIT}" -eq 1 ] && [ "${INIT_REPOSITORY}" -eq 1 ]; then
+
 	printf "${PRINTF_SUB_BLOCK}" "INIT" "$(date +'%F %T')" "${MODULE}";
 	if [ "${DEBUG}" -eq 1 ] || [ "${DRYRUN}" -eq 1 ]; then
 		echo "${BORG_COMMAND} init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY}";
+		echo "${BORG_COMMAND} key export ${REPOSITORY}";
+		echo "${BORG_COMMAND} key export --paper ${REPOSITORY}";
 	fi
 	if [ "${DRYRUN}" -eq 0 ]; then
 		# should trap and exit properly here
-		${BORG_COMMAND} init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY};
+		${BORG_COMMAND} init ${OPT_REMOTE} -e "${ENCRYPTION}" ${OPT_VERBOSE} "${REPOSITORY}";
+		# show the key file
+		if [ "${ENCRYPTION}" = "keyfile" ]; then
+			echo "--- [ENCRYPTION KEY] --[START]-------------------------------------------------->";
+			echo "Store the key and password in a safe place";
+			echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";borg key export [--paper] ${REPOSITORY}";
+			echo "----[BORG KEY] -------------------------------->";
+			${BORG_COMMAND} key export "${REPOSITORY}";
+			echo "----[BORG KEY:paper] -------------------------->";
+			${BORG_COMMAND} key export --paper "${REPOSITORY}";
+			echo "--- [ENCRYPTION KEY] --[END  ]-------------------------------------------------->";
+		fi;
 		# write init file
 		date +%s > "${BASE_FOLDER}${BACKUP_INIT_FILE}";
 		echo "Repository initialized";
@@ -358,6 +377,7 @@ if [ ! -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
 	exit 1;
 fi;
 
+# MARK: LIST / PRINT
 # PRINT OUT current data, only do this if REPO exists
 if [ "${PRINT}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "PRINT" "$(date +'%F %T')" "${MODULE}";
@@ -368,7 +388,7 @@ if [ "${PRINT}" -eq 1 ]; then
 	fi;
 	# run info command if not a dry drun
 	if [ "${DRYRUN}" -eq 0 ]; then
-		${BORG_COMMAND} list ${OPT_REMOTE} --format "${FORMAT}" ${REPOSITORY} ;
+		${BORG_COMMAND} list ${OPT_REMOTE} --format "${FORMAT}" "${REPOSITORY}" ;
 	fi;
 	if [ "${VERBOSE}" -eq 1 ]; then
 		echo "";
@@ -434,7 +454,7 @@ if [ -n "${DELETE_ONE_TIME_TAG}" ]; then
 	# not that compact only works on borg 1.2
 	if [ "$(version "$BORG_VERSION")" -ge "$(version "1.2.0")" ]; then
 		if [ "${DRYRUN}" -eq 0 ]; then
-			${BORG_COMMAND} compact ${OPT_REMOTE} ${REPOSITORY};
+			${BORG_COMMAND} compact ${OPT_REMOTE} "${REPOSITORY}";
 		fi;
 		if [ "${DEBUG}" -eq 1 ]; then
 			echo "${BORG_COMMAND} compact ${OPT_REMOTE} ${REPOSITORY}";

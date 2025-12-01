@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 if [ -z "${MODULE}" ]; then
 	echo "Script cannot be run on its own";
 	exit 1;
@@ -16,7 +19,7 @@ if [ $# -ge 1 ] && [ "$1" = "1" ]; then
 	printf "${PRINTF_MASTER_BLOCK}" "ERROR" "$(date +'%F %T')" "${MODULE}";
 else
 	# running time calculation
-	DURATION=$(( $(date +'%s')-START ));
+	DURATION=$(( $(date +'%s') - START ));
 	echo "=== [Run time: $(convert_time ${DURATION})]";
 	printf "${PRINTF_MASTER_BLOCK}" "END" "$(date +'%F %T')" "${MODULE}";
 fi;

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 # Plain file backup
 
 # set last edit date + time
@@ -35,7 +38,7 @@ FOLDERS=();
 # this if for debug output with quoted folders
 FOLDERS_Q=();
 # include list
-while read include_folder; do
+while read -r include_folder; do
 	# strip any leading spaces from that folder
 	include_folder=$(echo "${include_folder}" | sed -e 's/^[ \t]*//');
 	# check that those folders exist, warn on error,
@@ -111,7 +114,7 @@ if [ -s "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
 			if [ -n "${exclude_folder}" ]; then
 				# if it DOES NOT start with a / we assume free folder and add as is
 				if [[ "${exclude_folder}" != /* ]]; then
-					echo "${exclude_folder}" >> ${TMP_EXCLUDE_FILE};
+					echo "${exclude_folder}" >> "${TMP_EXCLUDE_FILE}";
 					echo "+ [E] General exclude: '${exclude_folder}'";
 				# if this is a glob, do a double check that the base folder actually exists (?)
 				elif [[ "${exclude_folder}" =~ $REGEX_GLOB ]]; then
@@ -121,7 +124,7 @@ if [ -s "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
 					if [ ! -d "${_exclude_folder}" ]; then
 						echo "- [E] Exclude folder with glob '${exclude_folder}' does not exist or is not accessable";
 					else
-						echo "${exclude_folder}" >> ${TMP_EXCLUDE_FILE};
+						echo "${exclude_folder}" >> "${TMP_EXCLUDE_FILE}";
 						echo "+ [E] Exclude folder with glob '${exclude_folder}'";
 					fi;
 				# do a warning for a possible invalid folder
@@ -129,7 +132,7 @@ if [ -s "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
 				elif [ ! -d "${exclude_folder}" ] && [ ! -e "${exclude_folder}" ]; then
 					echo "- [E] Exclude folder or file '${exclude_folder}' does not exist or is not accessable";
 				else
-					echo "${exclude_folder}" >> ${TMP_EXCLUDE_FILE};
+					echo "${exclude_folder}" >> "${TMP_EXCLUDE_FILE}";
 					# if it is a folder, remove the last / or the symlink check will not work
 					if [ -d "${exclude_folder}" ]; then
 						_exclude_folder=${exclude_folder%/*};

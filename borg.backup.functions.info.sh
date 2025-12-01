@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 if [ -z "${MODULE}" ]; then
 	echo "Script cannot be run on its own";
 	exit 1;
@@ -13,10 +16,15 @@ if [ "${INFO}" -eq 1 ]; then
 	fi;
 	# run info command if not a dry drun
 	if [ "${DRYRUN}" -eq 0 ]; then
-		${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY};
+		${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}";
+		if [ "${VERBOSE}" -eq 1 ]; then
+			# print key information
+			echo "------------------------------------------------------------------------------";
+			${BORG_COMMAND} key export "${REPOSITORY}";
+		fi;
 	fi;
 	if [ "${MODULE}" = "files" ]; then
-		if [ "$FOLDER_OK" -eq 1 ]; then
+		if [ "${FOLDER_OK}" -eq 1 ]; then
 			echo "--- [Run command]:";
 			#IFS="#";
 			echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${COMMAND} ${FOLDERS_Q[*]}";

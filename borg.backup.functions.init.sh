@@ -125,7 +125,7 @@ COMPRESSION_LEVEL="";
 SUB_COMPRESSION="";
 SUB_COMPRESSION_LEVEL="";
 # encryption settings
-DEFAULT_ENCRYPTION="none";
+DEFAULT_ENCRYPTION="keyfile";
 ENCRYPTION="";
 # force verify always
 DEFAULT_FORCE_VERIFY="false";
@@ -334,12 +334,12 @@ if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ] && [ ${INFO} -eq 1 ]; then
 	exit 1;
 fi;
 # print -P cannot be run with -i/-C/-I together
-if [ ${PRINT} -eq 1 ] && ([ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+if [ ${PRINT} -eq 1 ] && { [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]; }; then
 	echo "Cannot have -P print option and -i info, -V verify or -I initizalize option at the same time";
 	exit 1;
 fi;
 # if tag is set, you can't have init, verify, info, etc
-if [ -n "${ONE_TIME_TAG}" ] && ([ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+if [ -n "${ONE_TIME_TAG}" ] && { [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]; }; then
 	echo "Cannot have -T '${ONE_TIME_TAG}' option with -i info, -V verify, -I initialize or -P print option at the same time";
 	exit 1;
 fi;
@@ -352,7 +352,7 @@ elif [ -n "${ONE_TIME_TAG}" ]; then
 	ONE_TIME_TAG=${ONE_TIME_TAG}".";
 fi;
 # if -D, cannot be with -T, -i, -C, -I, -P
-if [ -n "${DELETE_ONE_TIME_TAG}" ] && ([ -n "${ONE_TIME_TAG}" ] || [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+if [ -n "${DELETE_ONE_TIME_TAG}" ] && { [ -n "${ONE_TIME_TAG}" ] || [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]; }; then
 	echo "Cannot have -D delete tag option with -T one time tag, -i info, -V verify, -I initialize or -P print option at the same time";
 	exit 1;
 fi;
@@ -599,11 +599,26 @@ fi;
 # if ENCRYPTION is empty or not in the valid list fall back to none
 # NOTE This is currently set in default and doesn't need to be set on empty
 # only ivalid should be checked
-#if [ -z "${ENCRYPTION}" ]; then
-#	ENCRYPTION="none";
-#else
-	# TODO check for invalid encryption string
-#fi;
+if
+	[ "${ENCRYPTION}" = "authenticated" ] ||
+	[ "${ENCRYPTION}" = "repokey" ] ||
+	[ "${ENCRYPTION}" = "authenticated-blake2" ] ||
+	[ "${ENCRYPTION}" = "repokey-blake2" ] ;
+then
+	# if "authenticated" or "repokey" a password must be set
+	if [[ ! -v BORG_PASSPHRASE ]] && [[ ! -v BORG_PASSCOMMAND ]] && [[ ! -v BORG_PASSPHRASE_FD ]]; then
+		echo "Encryption method '${ENCRYPTION}' requires a BORG_PASSPHRASE, BORG_PASSCOMMAND or BORG_PASSPHRASE_FD to be set.";
+		exit 1;
+	fi;
+elif [ "${ENCRYPTION}" = "keyfile" ] || [ "${ENCRYPTION}" = "keyfile-blake2" ]; then
+	# if no password, set empty password
+	if [[ ! -v BORG_PASSPHRASE ]] && [[ ! -v BORG_PASSCOMMAND ]] && [[ ! -v BORG_PASSPHRASE_FD ]]; then
+		export BORG_PASSPHRASE="";
+	fi;
+elif [ "${ENCRYPTION}" != "none" ]; then
+	echo "Encryption method '${ENCRYPTION}' is not valid.";
+	exit 1;
+fi;
 
 ## FUNCTIONS
 
@@ -618,22 +633,22 @@ function convert_time
 {
 	timestamp=${1};
 	# round to four digits for ms
-	timestamp=$(printf "%1.4f" $timestamp);
+	timestamp=$(printf "%1.4f" "$timestamp");
 	# get the ms part and remove any leading 0
-	ms=$(echo ${timestamp} | cut -d "." -f 2 | sed -e 's/^0*//');
-	timestamp=$(echo ${timestamp} | cut -d "." -f 1);
+	ms=$(echo "${timestamp}" | cut -d "." -f 2 | sed -e 's/^0*//');
+	timestamp=$(echo "${timestamp}" | cut -d "." -f 1);
 	timegroups=(86400 3600 60 1); # day, hour, min, sec
 	timenames=("d" "h" "m" "s"); # day, hour, min, sec
 	output=( );
 	time_string=;
-	for timeslice in ${timegroups[@]}; do
+	for timeslice in "${timegroups[@]}"; do
 		# floor for the division, push to output
 		output[${#output[*]}]=$(awk "BEGIN {printf \"%d\", ${timestamp}/${timeslice}}");
 		timestamp=$(awk "BEGIN {printf \"%d\", ${timestamp}%${timeslice}}");
 	done;
 
 	for ((i=0; i<${#output[@]}; i++)); do
-		if [ ${output[$i]} -gt 0 ] || [ -n "$time_string" ]; then
+		if [ "${output[$i]}" -gt 0 ] || [ -n "$time_string" ]; then
 			if [ -n "${time_string}" ]; then
 				time_string=${time_string}" ";
 			fi;

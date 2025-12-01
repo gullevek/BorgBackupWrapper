@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 if [ -z "${MODULE}" ]; then
 	echo "Script cannot be run on its own";
 	exit 1;
@@ -18,13 +21,13 @@ if [ $# -ge 1 ] && [ "$1" = "auto" ]; then
 	# get current date timestmap
 	CURRENT_DATE=$(date +%s);
 	# if =1 always ok
-	if [ ${CHECK_INTERVAL} -eq 1 ]; then
+	if [ "${CHECK_INTERVAL}" -eq 1 ]; then
 		RUN_CHECK=1;
 		# always add verify data for automatic check
 		OPT_CHECK_VERIFY_DATA="--verify-data";
 		# set new check time here
-		echo ${CURRENT_DATE} > "${BASE_FOLDER}${BACKUP_CHECK_FILE}";
-	elif [ ${CHECK_INTERVAL} -gt 1 ]; then
+		echo "${CURRENT_DATE}" > "${BASE_FOLDER}${BACKUP_CHECK_FILE}";
+	elif [ "${CHECK_INTERVAL}" -gt 1 ]; then
 		# else load last timestamp and check if today - last time stamp > days
 		if [ -z "${LAST_CHECK_DATE}" ]; then
 			LAST_CHECK_DATE=$(cat "${BASE_FOLDER}${BACKUP_CHECK_FILE}" 2>/dev/null | sed -e 's/ //g');
@@ -34,19 +37,19 @@ if [ $# -ge 1 ] && [ "$1" = "auto" ]; then
 			LAST_CHECK_DATE=0;
 		fi;
 		# if the difference greate than check date, run. CHECK INTERVAL is in days
-		if [ $(($CURRENT_DATE-$LAST_CHECK_DATE)) -ge $((${CHECK_INTERVAL}*86400)) ]; then
+		if [ $((CURRENT_DATE - LAST_CHECK_DATE)) -ge $((CHECK_INTERVAL * 86400)) ]; then
 			RUN_CHECK=1;
 			# always add verify data for automatic check
 			OPT_CHECK_VERIFY_DATA="--verify-data";
 			# set new check time here
-			echo ${CURRENT_DATE} > "${BASE_FOLDER}${BACKUP_CHECK_FILE}";
+			echo "${CURRENT_DATE}" > "${BASE_FOLDER}${BACKUP_CHECK_FILE}";
 		fi;
 	fi;
-elif [ ${CHECK} -eq 1 ]; then
+elif [ "${CHECK}" -eq 1 ]; then
 	RUN_CHECK=1;
 fi;
 
-if [ ${RUN_CHECK} -eq 1 ]; then
+if [ "${RUN_CHECK}" -eq 1 ]; then
 	# run borg check command
 	IFS=${_IFS};
 	printf "${PRINTF_SUB_BLOCK}" "CHECK" "$(date +'%F %T')" "${MODULE}";
@@ -58,21 +61,21 @@ if [ ${RUN_CHECK} -eq 1 ]; then
 		OPT_GLOB="-P ${CHECK_PREFIX}";
 	fi;
 	# debug/dryrun
-	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
+	if [ "${DEBUG}" -eq 1 ] || [ "${DRYRUN}" -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY}";
 	fi;
 	# run info command if not a dry drun
-	if [ ${DRYRUN} -eq 0 ]; then
+	if [ "${DRYRUN}" -eq 0 ]; then
 		# if glob add glob command directly
 		if [[ "${CHECK_PREFIX}" =~ $REGEX_GLOB ]]; then
-		${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} -a "${CHECK_PREFIX}" ${REPOSITORY};
+		${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} -a "${CHECK_PREFIX}" "${REPOSITORY}";
 		else
-			${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} ${REPOSITORY};
+			${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} ${OPT_CHECK_VERIFY_DATA} ${OPT_GLOB} "${REPOSITORY}";
 		fi;
 	fi;
 	# print additional info for use --repair command
 	# but only for manual checks
-	if [ ${VERBOSE} -eq 1 ] && [ ${CHECK} -eq 1 ]; then
+	if [ "${VERBOSE}" -eq 1 ] && [ "${CHECK}" -eq 1 ]; then
 		echo "";
 		echo "In case of needed repair: "
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} check ${OPT_REMOTE} ${OPT_PROGRESS} --repair ${OPT_GLOB} ${REPOSITORY}";

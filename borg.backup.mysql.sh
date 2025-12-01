@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 # Backup MySQL/MariaDB
 # default is per table dump, can be set to one full dump
 # config override set in borg.backup.mysql.settings
@@ -62,10 +65,11 @@ if [ -z "${_MYSQL_OK}" ]; then
 fi;
 # below is for file name only
 # set DB_VERSION (Distrib n.n.n-type)
-# NEW: mysql  Ver 15.1 Distrib 10.5.12-MariaDB, for debian-linux-gnu (x86_64) using  EditLine wrapper
-# OLD: mysql  Ver 14.14 Distrib 5.7.35, for Linux (x86_64) using  EditLine wrapper
+# OLD:     mysql  Ver 14.14 Distrib 5.7.35, for Linux (x86_64) using  EditLine wrapper
+# NEW:     mysql  Ver 15.1 Distrib 10.5.12-MariaDB, for debian-linux-gnu (x86_64) using  EditLine wrapper
+# VARIANT: mysql from 11.8.3-MariaDB, client 15.2 for debian-linux-gnu (x86_64) using  EditLine wrapper
 _DB_VERSION_TYPE=$("${MYSQL_CMD}" --version);
-_DB_VERSION=$(echo "${_DB_VERSION_TYPE}" | sed 's/.*Distrib \([0-9]\{1,\}\.[0-9]\{1,\}\)\.[0-9]\{1,\}.*/\1/');
+_DB_VERSION=$(echo "${_DB_VERSION_TYPE}" | sed 's/.*\(Distrib\|from\) \([0-9]\{1,\}\.[0-9]\{1,\}\)\.[0-9]\{1,\}.*/\2/');
 DB_VERSION=$(echo "${_DB_VERSION}" | cut -d " " -f 1);
 # temporary until correct type detection is set
 DB_TYPE="mysql";
@@ -125,11 +129,11 @@ if [ -n "${DATABASE_FULL_DUMP}" ]; then
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
-	DURATION=$[ $(date +'%s')-$LOCAL_START ];
+	DURATION=$(( $(date +'%s') - LOCAL_START ));
 	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "all databases" "${MODULE}" "$(convert_time ${DURATION})";
 else
 	${MYSQL_CMD} ${MYSQL_DB_CONFIG_PARAM} -B -N -e "show databases" |
-	while read db; do
+	while read -r db; do
 		LOCAL_START=$(date +'%s');
 		printf "${PRINTF_DB_SUB_BLOCK}" "DB" "${db}" "${MODULE}";
 		printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "${db}" "$(date +'%F %T')" "${MODULE}";
@@ -147,7 +151,7 @@ else
 		fi;
 		exclude=0;
 		if [ -f "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
-			while read excl_db; do
+			while read -r excl_db; do
 				if [ "${db}" = "${excl_db}" ]; then
 					exclude=1;
 					break;
@@ -177,7 +181,7 @@ else
 			SCHEMA_ONLY=''; # empty for all
 			schema_flag='data'; # or data
 			if [ -s "${BASE_FOLDER}${SCHEMA_ONLY_FILE}" ]; then
-				while read schema_db; do
+				while read -r schema_db; do
 					if [ "${db}" = "${schema_db}" ]; then
 						SCHEMA_ONLY='--no-data';
 						schema_flag='schema';
@@ -217,7 +221,7 @@ else
 		else
 			echo "- [E] ${db}";
 		fi;
-		DURATION=$[ $(date +'%s')-$LOCAL_START ];
+		DURATION=$(( $(date +'%s') - LOCAL_START ));
 		printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 	done;
 fi;
