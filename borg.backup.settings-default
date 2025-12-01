@@ -23,10 +23,13 @@ COMPRESSION_LEVEL="";
 # encryption settings:
 # SHA-256: 'none', 'authenticated', 'repokey', 'keyfile'
 # BLAKE2b: 'authenticated-blake2', 'repokey-blake2', 'keyfile-blake2'
-# Note: none or empty does not encrypt
+# Note: none does not encrypt
 # Blank passwords allowed for only key (if used, use keyfile)
+# Default is keyfile
+# passwords have to be set via BORG_PASSPHRASE or BORG_PASSCOMMAND
+# keyfile can have blank passwords
 # See: http://borgbackup.readthedocs.io/en/stable/faq.html#how-can-i-specify-the-encryption-passphrase-programmatically
-ENCRYPTION="";
+ENCRYPTION=""
 # force repository verify, default is off, set to true for verify on every run
 FORCE_VERIFY="";
 # compact interval, only if using borg 1.2 or higher

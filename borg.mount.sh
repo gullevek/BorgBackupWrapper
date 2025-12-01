@@ -33,7 +33,7 @@ function usage ()
 }
 
 # set options
-while getopts ":c:m:uf:h" opt do
+while getopts ":c:m:uf:h" opt; do
 	case "${opt}" in
 		c|config)
 			BASE_FOLDER=${OPTARG};

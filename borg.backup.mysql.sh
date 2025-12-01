@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 # Backup MySQL/MariaDB
 # default is per table dump, can be set to one full dump
 # config override set in borg.backup.mysql.settings
@@ -87,7 +90,7 @@ EVENTDB="mysql"
 EVENTS="--events"
 
 # ALL IN ONE FILE or PER DATABASE FLAG
-if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
+if [ -n "${DATABASE_FULL_DUMP}" ]; then
 	SCHEMA_ONLY='';
 	schema_flag='data';
 	if [ "${DATABASE_FULL_DUMP}" = "schema" ]; then
@@ -126,11 +129,11 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
-	DURATION=$[ $(date +'%s')-$LOCAL_START ];
+	DURATION=$(( $(date +'%s') - LOCAL_START ));
 	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "all databases" "${MODULE}" "$(convert_time ${DURATION})";
 else
 	${MYSQL_CMD} ${MYSQL_DB_CONFIG_PARAM} -B -N -e "show databases" |
-	while read db; do
+	while read -r db; do
 		LOCAL_START=$(date +'%s');
 		printf "${PRINTF_DB_SUB_BLOCK}" "DB" "${db}" "${MODULE}";
 		printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "${db}" "$(date +'%F %T')" "${MODULE}";
@@ -148,7 +151,7 @@ else
 		fi;
 		exclude=0;
 		if [ -f "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
-			while read excl_db; do
+			while read -r excl_db; do
 				if [ "${db}" = "${excl_db}" ]; then
 					exclude=1;
 					break;
@@ -178,7 +181,7 @@ else
 			SCHEMA_ONLY=''; # empty for all
 			schema_flag='data'; # or data
 			if [ -s "${BASE_FOLDER}${SCHEMA_ONLY_FILE}" ]; then
-				while read schema_db; do
+				while read -r schema_db; do
 					if [ "${db}" = "${schema_db}" ]; then
 						SCHEMA_ONLY='--no-data';
 						schema_flag='schema';
@@ -218,7 +221,7 @@ else
 		else
 			echo "- [E] ${db}";
 		fi;
-		DURATION=$[ $(date +'%s')-$LOCAL_START ];
+		DURATION=$(( $(date +'%s') - LOCAL_START ));
 		printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 	done;
 fi;

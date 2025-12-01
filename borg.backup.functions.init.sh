@@ -125,7 +125,7 @@ COMPRESSION_LEVEL="";
 SUB_COMPRESSION="";
 SUB_COMPRESSION_LEVEL="";
 # encryption settings
-DEFAULT_ENCRYPTION="none";
+DEFAULT_ENCRYPTION="keyfile";
 ENCRYPTION="";
 # force verify always
 DEFAULT_FORCE_VERIFY="false";
@@ -334,31 +334,31 @@ if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ] && [ ${INFO} -eq 1 ]; then
 	exit 1;
 fi;
 # print -P cannot be run with -i/-C/-I together
-if [ ${PRINT} -eq 1 ] && ([ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+if [ ${PRINT} -eq 1 ] && { [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]; }; then
 	echo "Cannot have -P print option and -i info, -V verify or -I initizalize option at the same time";
 	exit 1;
 fi;
 # if tag is set, you can't have init, verify, info, etc
-if [ ! -z "${ONE_TIME_TAG}" ] && ([ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+if [ -n "${ONE_TIME_TAG}" ] && { [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]; }; then
 	echo "Cannot have -T '${ONE_TIME_TAG}' option with -i info, -V verify, -I initialize or -P print option at the same time";
 	exit 1;
 fi;
 # verify only alphanumeric, no spaces, only underscore and dash
-if [ ! -z "${ONE_TIME_TAG}" ] && ! [[ "${ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+$ ]]; then
+if [ -n "${ONE_TIME_TAG}" ] && ! [[ "${ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+$ ]]; then
 	echo "One time tag '${ONE_TIME_TAG}' must be alphanumeric with dashes and underscore only.";
 	exit 1;
-elif [ ! -z "${ONE_TIME_TAG}" ]; then
+elif [ -n "${ONE_TIME_TAG}" ]; then
 	# all ok, attach . at the end
 	ONE_TIME_TAG=${ONE_TIME_TAG}".";
 fi;
 # if -D, cannot be with -T, -i, -C, -I, -P
-if [ ! -z "${DELETE_ONE_TIME_TAG}" ] && ([ ! -z "${ONE_TIME_TAG}" ] || [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]); then
+if [ -n "${DELETE_ONE_TIME_TAG}" ] && { [ -n "${ONE_TIME_TAG}" ] || [ ${PRINT} -eq 1 ] || [ ${INIT} -eq 1 ] || [ ${VERIFY} -eq 1 ] || [ ${INFO} -eq 1 ]; }; then
 	echo "Cannot have -D delete tag option with -T one time tag, -i info, -V verify, -I initialize or -P print option at the same time";
 	exit 1;
 fi;
 # -D also must be in valid backup set format
 # ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]
-if [ ! -z "${DELETE_ONE_TIME_TAG}" ] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},([A-Za-z0-9_-]+-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]; then
+if [ -n "${DELETE_ONE_TIME_TAG}" ] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},([A-Za-z0-9_-]+-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]; then
 	echo "Delete one time tag '${DELETE_ONE_TIME_TAG}' is in an invalid format. "
 	echo "Please verify existing tags with -P option."
 	echo "For a globing be sure it is in the format of: TAG.MODULE,*-YYYY-MM-DDT*";
@@ -371,7 +371,7 @@ if [ ${CHECK_VERIFY_DATA} -eq 1 ] && [ ${CHECK} -eq 0 ]; then
 	exit 1;
 fi;
 # -p can't be set without -C
-if [ ! -z "${CHECK_PREFIX}" ] && [ ${CHECK} -eq 0 ]; then
+if [ -n "${CHECK_PREFIX}" ] && [ ${CHECK} -eq 0 ]; then
 	echo "-p (pattern|glob) for check cannot be run without -C (Check) options";
 	exit 1;
 fi;
@@ -404,14 +404,14 @@ fi;
 . "${BASE_FOLDER}${SETTINGS_FILE}";
 
 # if OPTION SET overrides ALL others
-if [ ! -z "${OPT_BORG_EXECUTEABLE}" ]; then
+if [ -n "${OPT_BORG_EXECUTEABLE}" ]; then
 	BORG_COMMAND="${OPT_BORG_EXECUTEABLE}";
 	if [ ! -f "${BORG_COMMAND}" ]; then
 		echo "borg command not found with option -b: ${BORG_COMMAND}";
 		exit;
 	fi;
 # if in setting file, use this
-elif [ ! -z "${BORG_EXECUTEABLE}" ]; then
+elif [ -n "${BORG_EXECUTEABLE}" ]; then
 	BORG_COMMAND="${BORG_EXECUTEABLE}";
 	if [ ! -f "${BORG_COMMAND}" ]; then
 		echo "borg command not found with setting: ${BORG_COMMAND}";
@@ -451,7 +451,7 @@ if [ -z "${CHECK_INTERVAL}" ]; then
 	CHECK_INTERVAL="${DEFAULT_CHECK_INTERVAL}";
 fi;
 # deprecated name FORCE_CHECK, use FORCE_VERIFY instead
-if [ ! -z "${FORCE_CHECK}" ]; then
+if [ -n "${FORCE_CHECK}" ]; then
 	FORCE_VERIFY="${FORCE_CHECK}";
 fi;
 if [ -z "${FORCE_VERIFY}" ]; then
@@ -482,48 +482,48 @@ SETTINGS_FILE_SUB=$(echo "${SETTINGS_FILE}" | sed -e "s/\.settings/\.${MODULE,,}
 if [ -f "${BASE_FOLDER}${SETTINGS_FILE_SUB}" ]; then
 	. "${BASE_FOLDER}${SETTINGS_FILE_SUB}";
 	# if SUB_ set override master
-	if [ ! -z "${SUB_BACKUP_FILE}" ]; then
+	if [ -n "${SUB_BACKUP_FILE}" ]; then
 		BACKUP_FILE=${SUB_BACKUP_FILE}
 	fi;
 	# if sub backup set it set, override current
-	if [ ! -z "${SUB_BACKUP_SET}" ]; then
+	if [ -n "${SUB_BACKUP_SET}" ]; then
 		BACKUP_SET=${SUB_BACKUP_SET};
 	fi;
 	# ovrride compression
-	if [ ! -z "${SUB_COMPRESSION}" ]; then
+	if [ -n "${SUB_COMPRESSION}" ]; then
 		COMPRESSION=${SUB_COMPRESSION};
 	fi;
-	if [ ! -z "${SUB_COMPRESSION_LEVEL}" ]; then
+	if [ -n "${SUB_COMPRESSION_LEVEL}" ]; then
 		COMPRESSION_LEVEL=${SUB_COMPRESSION_LEVEL};
 	fi;
 	# compact interval override
-	if [ ! -z "${SUB_COMPACT_INTERVAL}" ]; then
+	if [ -n "${SUB_COMPACT_INTERVAL}" ]; then
 		COMPACT_INTERVAL="${SUB_COMPACT_INTERVAL}";
 	fi;
 	# override check interval
-	if [ ! -z "${SUB_CHECK_INTERVAL}" ]; then
+	if [ -n "${SUB_CHECK_INTERVAL}" ]; then
 		CHECK_INTERVAL="${SUB_CHECK_INTERVAL}";
 	fi;
 	# check override for keep time
-	if [ ! -z "${SUB_KEEP_LAST}" ]; then
+	if [ -n "${SUB_KEEP_LAST}" ]; then
 		KEEP_LAST=${SUB_KEEP_LAST};
 	fi;
-	if [ ! -z "${SUB_KEEP_HOURS}" ]; then
+	if [ -n "${SUB_KEEP_HOURS}" ]; then
 		KEEP_HOURS=${SUB_KEEP_HOURS};
 	fi;
-	if [ ! -z "${SUB_KEEP_DAYS}" ]; then
+	if [ -n "${SUB_KEEP_DAYS}" ]; then
 		KEEP_DAYS=${SUB_KEEP_DAYS};
 	fi;
-	if [ ! -z "${SUB_KEEP_WEEKS}" ]; then
+	if [ -n "${SUB_KEEP_WEEKS}" ]; then
 		KEEP_WEEKS=${SUB_KEEP_WEEKS};
 	fi;
-	if [ ! -z "${SUB_KEEP_MONTHS}" ]; then
+	if [ -n "${SUB_KEEP_MONTHS}" ]; then
 		KEEP_MONTHS=${SUB_KEEP_MONTHS};
 	fi;
-	if [ ! -z "${SUB_KEEP_YEARS}" ]; then
+	if [ -n "${SUB_KEEP_YEARS}" ]; then
 		KEEP_YEARS=${SUB_KEEP_YEARS};
 	fi;
-	if [ ! -z "${SUB_KEEP_WITHIN}" ]; then
+	if [ -n "${SUB_KEEP_WITHIN}" ]; then
 		KEEP_WITHIN=${SUB_KEEP_WITHIN};
 	fi;
 fi;
@@ -571,7 +571,7 @@ fi
 
 # log file set and check
 # option folder overrides all other folders
-if [ ! -z "${OPT_LOG_FOLDER}" ]; then
+if [ -n "${OPT_LOG_FOLDER}" ]; then
 	LOG_FOLDER="${OPT_LOG_FOLDER}";
 fi;
 # if empty folder set to default folder
@@ -599,11 +599,26 @@ fi;
 # if ENCRYPTION is empty or not in the valid list fall back to none
 # NOTE This is currently set in default and doesn't need to be set on empty
 # only ivalid should be checked
-#if [ -z "${ENCRYPTION}" ]; then
-#	ENCRYPTION="none";
-#else
-	# TODO check for invalid encryption string
-#fi;
+if
+	[ "${ENCRYPTION}" = "authenticated" ] ||
+	[ "${ENCRYPTION}" = "repokey" ] ||
+	[ "${ENCRYPTION}" = "authenticated-blake2" ] ||
+	[ "${ENCRYPTION}" = "repokey-blake2" ] ;
+then
+	# if "authenticated" or "repokey" a password must be set
+	if [[ ! -v BORG_PASSPHRASE ]] && [[ ! -v BORG_PASSCOMMAND ]] && [[ ! -v BORG_PASSPHRASE_FD ]]; then
+		echo "Encryption method '${ENCRYPTION}' requires a BORG_PASSPHRASE, BORG_PASSCOMMAND or BORG_PASSPHRASE_FD to be set.";
+		exit 1;
+	fi;
+elif [ "${ENCRYPTION}" = "keyfile" ] || [ "${ENCRYPTION}" = "keyfile-blake2" ]; then
+	# if no password, set empty password
+	if [[ ! -v BORG_PASSPHRASE ]] && [[ ! -v BORG_PASSCOMMAND ]] && [[ ! -v BORG_PASSPHRASE_FD ]]; then
+		export BORG_PASSPHRASE="";
+	fi;
+elif [ "${ENCRYPTION}" != "none" ]; then
+	echo "Encryption method '${ENCRYPTION}' is not valid.";
+	exit 1;
+fi;
 
 ## FUNCTIONS
 
@@ -618,30 +633,30 @@ function convert_time
 {
 	timestamp=${1};
 	# round to four digits for ms
-	timestamp=$(printf "%1.4f" $timestamp);
+	timestamp=$(printf "%1.4f" "$timestamp");
 	# get the ms part and remove any leading 0
-	ms=$(echo ${timestamp} | cut -d "." -f 2 | sed -e 's/^0*//');
-	timestamp=$(echo ${timestamp} | cut -d "." -f 1);
+	ms=$(echo "${timestamp}" | cut -d "." -f 2 | sed -e 's/^0*//');
+	timestamp=$(echo "${timestamp}" | cut -d "." -f 1);
 	timegroups=(86400 3600 60 1); # day, hour, min, sec
 	timenames=("d" "h" "m" "s"); # day, hour, min, sec
 	output=( );
 	time_string=;
-	for timeslice in ${timegroups[@]}; do
+	for timeslice in "${timegroups[@]}"; do
 		# floor for the division, push to output
 		output[${#output[*]}]=$(awk "BEGIN {printf \"%d\", ${timestamp}/${timeslice}}");
 		timestamp=$(awk "BEGIN {printf \"%d\", ${timestamp}%${timeslice}}");
 	done;
 
 	for ((i=0; i<${#output[@]}; i++)); do
-		if [ ${output[$i]} -gt 0 ] || [ ! -z "$time_string" ]; then
-			if [ ! -z "${time_string}" ]; then
+		if [ "${output[$i]}" -gt 0 ] || [ -n "$time_string" ]; then
+			if [ -n "${time_string}" ]; then
 				time_string=${time_string}" ";
 			fi;
 			time_string=${time_string}${output[$i]}${timenames[$i]};
 		fi;
 	done;
-	if [ ! -z ${ms} ] && [ "${ms}" != "nan" ] && [ ${ms} -gt 0 ]; then
-		time_string=${time_string}" "${ms}"ms";
+	if [ -n "${ms}" ] && [ "${ms}" != "nan" ] && [ "${ms}" -gt 0 ]; then
+		time_string="${time_string} ${ms}ms";
 	fi;
 	# just in case the time is 0
 	if [ -z "${time_string}" ]; then

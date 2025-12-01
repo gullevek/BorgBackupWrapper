@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 # Backup gitea database, all git folders and gitea settings
 
 MODULE="gitea"
@@ -93,7 +96,7 @@ if [ ${DRYRUN} -eq 0 ]; then
 		fi;
 		chown -R ${GIT_USER}: "${GITEA_WORKING_DIR}";
 		# this needs to be run in a folder that can be stat by git user
-		cd "${GITEA_WORKING_DIR}";
+		cd "${GITEA_WORKING_DIR}" || exit 1;
 		sudo -u ${GIT_USER} ${GITEA_BIN} dump -c ${GITEA_CONFIG} -w ${GITEA_WORKING_DIR} -t ${GITEA_TEMP_DIR} --type ${GITEA_EXPORT_TYPE} -L -f - | ${BORG_CALL};
 	) 2>&1 | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' # remove all ESC strings
 fi;

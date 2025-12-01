@@ -66,7 +66,7 @@ if [ ! -f "${BASE_FOLDER}${SETTINGS_FILE}" ]; then
 fi;
 . "${BASE_FOLDER}${SETTINGS_FILE}";
 
-if [ ! -z "${TARGET_BORG_PATH}" ]; then
+if [ -n "${TARGET_BORG_PATH}" ]; then
 	OPT_REMOTE="--remote-path="$(printf "%q" "${TARGET_BORG_PATH}");
 fi;
 export BORG_BASE_DIR="${BASE_FOLDER}";
@@ -82,16 +82,16 @@ for MODULE in ${MODULE_LIST}; do
 	TARGET_FOLDER=${TARGET_FOLDER#/}
 	# and add slash front and back and escape the path
 	TARGET_FOLDER=$(printf "%q" "/${TARGET_FOLDER}/");
-	if [ ! -z "${TARGET_USER}" ] && [ ! -z "${TARGET_HOST}" ] && [ ! -z "${TARGET_PORT}" ]; then
+	if [ -n "${TARGET_USER}" ] && [ -n "${TARGET_HOST}" ] && [ -n "${TARGET_PORT}" ]; then
 		TARGET_SERVER="ssh://${TARGET_USER}@${TARGET_HOST}:${TARGET_PORT}/";
 	# host/port
-	elif [ ! -z "${TARGET_HOST}" ] && [ ! -z "${TARGET_PORT}" ]; then
+	elif [ -n "${TARGET_HOST}" ] && [ -n "${TARGET_PORT}" ]; then
 		TARGET_SERVER="ssh://${TARGET_HOST}:${TARGET_PORT}/";
 	# user/host
-	elif [ ! -z "${TARGET_USER}" ] && [ ! -z "${TARGET_HOST}" ]; then
+	elif [ -n "${TARGET_USER}" ] && [ -n "${TARGET_HOST}" ]; then
 		TARGET_SERVER="${TARGET_USER}@${TARGET_HOST}:";
 	# host
-	elif [ ! -z "${TARGET_HOST}" ]; then
+	elif [ -n "${TARGET_HOST}" ]; then
 		TARGET_SERVER="${TARGET_HOST}:";
 	fi;
 	# we dont allow special characters, so we don't need to special escape it
@@ -112,14 +112,14 @@ for MODULE in ${MODULE_LIST}; do
 		if [ "${MODULE}" = "gitea" ]; then
 			# if just date, add gitea,
 			# else rename
-			if [ ! -z "${i##gitea*}" ]; then
+			if [ -n "${i##gitea*}" ]; then
 				target_name="${MODULE},${i}";
 			else
 				target_name=$(echo $i | sed -e 's/gitea-/gitea,/');
 			fi;
 		elif [ "${MODULE}" = "zabbix" ]; then
 			# if zabbix is missing, prefix
-			if [ ! -z "${i##zabbix*}" ]; then
+			if [ -n "${i##zabbix*}" ]; then
 				target_name="${MODULE},${i}";
 			else
 				target_name=$(echo $i | sed -e 's/zabbix-settings-/zabbix,settings-/');

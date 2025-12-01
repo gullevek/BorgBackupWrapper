@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 if [ -z "${MODULE}" ]; then
 	echo "Script cannot be run on its own";
 	exit 1;
@@ -10,7 +13,7 @@ START=$(date +'%s');
 # set init date, or today if not file is set
 BACKUP_INIT_DATE='';
 if [ -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
-	BACKUP_INIT_DATE=$(printf '%(%c)T' $(cat "${BASE_FOLDER}${BACKUP_INIT_FILE}" 2>/dev/null));
+	BACKUP_INIT_DATE=$(printf '%(%c)T' "$(cat "${BASE_FOLDER}${BACKUP_INIT_FILE}" 2>/dev/null)");
 fi;
 # start logging from here
 exec &> >(tee -a "${LOG}");
@@ -30,13 +33,13 @@ printf "${PRINTF_INFO_STRING}" "Base folder" "${BASE_FOLDER}";
 printf "${PRINTF_INFO_STRING}" "Module init date" "${BACKUP_INIT_DATE}";
 # print last compact date if positive integer
 # only if borg > 1.2
-if [ $(version $BORG_VERSION) -ge $(version "1.2.0") ]; then
+if [ "$(version "$BORG_VERSION")" -ge "$(version "1.2.0")" ]; then
 	if [ "${COMPACT_INTERVAL##*[!0-9]*}" ]; then
 		printf "${PRINTF_INFO_STRING}" "Module compact interval" "${COMPACT_INTERVAL}";
 		if [ -f "${BASE_FOLDER}${BACKUP_COMPACT_FILE}" ]; then
 			LAST_COMPACT_DATE=$(cat "${BASE_FOLDER}${BACKUP_COMPACT_FILE}" 2>/dev/null);
 			printf "${PRINTF_INFO_STRING}" "Module last compact" \
-				"$(printf '%(%c)T' ${LAST_COMPACT_DATE}) ($(convert_time $(($(date +%s)-${LAST_COMPACT_DATE}))) ago)";
+				"$(printf '%(%c)T' "${LAST_COMPACT_DATE}") ($(convert_time $(($(date +%s) - LAST_COMPACT_DATE))) ago)";
 		else
 			printf "${PRINTF_INFO_STRING}" "Module last compact" "No compact run yet"
 		fi;
@@ -49,7 +52,7 @@ if [ "${CHECK_INTERVAL##*[!0-9]*}" ]; then
 	if [ -f "${BASE_FOLDER}${BACKUP_CHECK_FILE}" ]; then
 		LAST_CHECK_DATE=$(cat "${BASE_FOLDER}${BACKUP_CHECK_FILE}" 2>/dev/null);
 		printf "${PRINTF_INFO_STRING}" "Module last check" \
-			"$(printf '%(%c)T' ${LAST_CHECK_DATE}) ($(convert_time $(($(date +%s)-${LAST_CHECK_DATE}))) ago)";
+			"$(printf '%(%c)T' "${LAST_CHECK_DATE}") ($(convert_time $(($(date +%s) - LAST_CHECK_DATE))) ago)";
 	else
 		printf "${PRINTF_INFO_STRING}" "Module last check" "No check run yet";
 	fi;
@@ -57,15 +60,15 @@ fi;
 
 # if force verify is true set VERIFY to 1 unless INFO is 1
 # Needs bash 4.0 at lesat for this
-if [ "${FORCE_VERIFY,,}" = "true" ] && [ ${INFO} -eq 0 ]; then
+if [ "${FORCE_VERIFY,,}" = "true" ] && [ "${INFO}" -eq 0 ]; then
 	VERIFY=1;
-	if [ ${DEBUG} -eq 1 ]; then
+	if [ "${DEBUG}" -eq 1 ]; then
 		echo "Force repository verify";
 	fi;
 fi;
 
 # remote borg path
-if [ ! -z "${TARGET_BORG_PATH}" ]; then
+if [ -n "${TARGET_BORG_PATH}" ]; then
 	if [[ "${TARGET_BORG_PATH}" =~ \ |\' ]]; then
 		echo "Space found in ${TARGET_BORG_PATH}. Aborting";
 		echo "There are issues with passing on paths with spaces"
@@ -102,16 +105,16 @@ TARGET_SERVER='';
 # allow host only (if full setup in .ssh/config)
 # user@host OR ssh://user@host:port/ IF TARGET_PORT is set
 # user/host/port
-if [ ! -z "${TARGET_USER}" ] && [ ! -z "${TARGET_HOST}" ] && [ ! -z "${TARGET_PORT}" ]; then
+if [ -n "${TARGET_USER}" ] && [ -n "${TARGET_HOST}" ] && [ -n "${TARGET_PORT}" ]; then
 	TARGET_SERVER="ssh://${TARGET_USER}@${TARGET_HOST}:${TARGET_PORT}/";
 # host/port
-elif [ ! -z "${TARGET_HOST}" ] && [ ! -z "${TARGET_PORT}" ]; then
+elif [ -n "${TARGET_HOST}" ] && [ -n "${TARGET_PORT}" ]; then
 	TARGET_SERVER="ssh://${TARGET_HOST}:${TARGET_PORT}/";
 # user/host
-elif [ ! -z "${TARGET_USER}" ] && [ ! -z "${TARGET_HOST}" ]; then
+elif [ -n "${TARGET_USER}" ] && [ -n "${TARGET_HOST}" ]; then
 	TARGET_SERVER="${TARGET_USER}@${TARGET_HOST}:";
 # host
-elif [ ! -z "${TARGET_HOST}" ]; then
+elif [ -n "${TARGET_HOST}" ]; then
 	TARGET_SERVER="${TARGET_HOST}:";
 fi;
 # we dont allow special characters, so we don't need to special escape it
@@ -120,13 +123,13 @@ printf "${PRINTF_INFO_STRING}" "Repository" "${REPOSITORY}";
 
 # check if given compression name and level are valid
 OPT_COMPRESSION='';
-if [ ! -z "${COMPRESSION}" ]; then
+if [ -n "${COMPRESSION}" ]; then
 	# valid compression
 	if [ "${COMPRESSION}" = "lz4" ] || [ "${COMPRESSION}" = "zlib" ] || [ "${COMPRESSION}" = "lzma" ] || [ "${COMPRESSION}" = "zstd" ]; then
 		OPT_COMPRESSION="-C=${COMPRESSION}";
 		# if COMPRESSION_LEVEL, check it is a valid regex
 		# for zlib, zstd, lzma
-		if [ ! -z "${COMPRESSION_LEVEL}" ] && ([ "${COMPRESSION}" = "zlib" ] || [ "${COMPRESSION}" = "lzma" ] || [ "${COMPRESSION}" = "zstd" ]); then
+		if [ -n "${COMPRESSION_LEVEL}" ] && { [ "${COMPRESSION}" = "zlib" ] || [ "${COMPRESSION}" = "lzma" ] || [ "${COMPRESSION}" = "zstd" ]; }; then
 			MIN_COMPRESSION=0;
 			MAX_COMPRESSION=0;
 			case "${COMPRESSION}" in
@@ -152,10 +155,10 @@ if [ ! -z "${COMPRESSION}" ]; then
 			# fi;
 			error_message="[! $(date +'%F %T')] Compression level for ${COMPRESSION} needs to be a numeric value between ${MIN_COMPRESSION} and ${MAX_COMPRESSION}: ${COMPRESSION_LEVEL}";
 			if ! [[ "${COMPRESSION_LEVEL}" =~ ${REGEX_NUMERIC} ]]; then
-				echo ${error_message};
+				echo "${error_message}";
 				exit 1;
-			elif [ ${COMPRESSION_LEVEL} -lt ${MIN_COMPRESSION} ] || [ ${COMPRESSION_LEVEL} -gt ${MAX_COMPRESSION} ]; then
-				echo ${error_message};
+			elif [ "${COMPRESSION_LEVEL}" -lt "${MIN_COMPRESSION}" ] || [ "${COMPRESSION_LEVEL}" -gt "${MAX_COMPRESSION}" ]; then
+				echo "${error_message}";
 				exit 1;
 			else
 				OPT_COMPRESSION=${OPT_COMPRESSION}","${COMPRESSION_LEVEL};
@@ -177,7 +180,7 @@ KEEP_OPTIONS=();
 # keep info string (for files)
 KEEP_INFO="";
 # override standard keep for tagged backups
-if [ ! -z "${ONE_TIME_TAG}" ]; then
+if [ -n "${ONE_TIME_TAG}" ]; then
 	BACKUP_SET="{now:%Y-%m-%dT%H:%M:%S}";
 	# set empty to avoid problems
 	KEEP_OPTIONS=("");
@@ -185,32 +188,32 @@ else
 	# build options and info string,
 	# also flag BACKUP_SET check if hourly is set
 	BACKUP_SET_VERIFY=0;
-	if [ ${KEEP_LAST} -gt 0 ]; then
+	if [ "${KEEP_LAST}" -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-last=${KEEP_LAST}");
 		KEEP_INFO="${KEEP_INFO}, last: ${KEEP_LAST}";
 	fi;
-	if [ ${KEEP_HOURS} -gt 0 ]; then
+	if [ "${KEEP_HOURS}" -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-hourly=${KEEP_HOURS}");
 		KEEP_INFO="${KEEP_INFO}, hourly: ${KEEP_HOURS}";
 		BACKUP_SET_VERIFY=1;
 	fi;
-	if [ ${KEEP_DAYS} -gt 0 ]; then
+	if [ "${KEEP_DAYS}" -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-daily=${KEEP_DAYS}");
 		KEEP_INFO="${KEEP_INFO}, daily: ${KEEP_DAYS}";
 	fi;
-	if [ ${KEEP_WEEKS} -gt 0 ]; then
+	if [ "${KEEP_WEEKS}" -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-weekly=${KEEP_WEEKS}");
 		KEEP_INFO="${KEEP_INFO}, weekly: ${KEEP_WEEKS}";
 	fi;
-	if [ ${KEEP_MONTHS} -gt 0 ]; then
+	if [ "${KEEP_MONTHS}" -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-monthly=${KEEP_MONTHS}");
 		KEEP_INFO="${KEEP_INFO}, monthly: ${KEEP_MONTHS}";
 	fi;
-	if [ ${KEEP_YEARS} -gt 0 ]; then
+	if [ "${KEEP_YEARS}" -gt 0 ]; then
 		KEEP_OPTIONS+=("--keep-yearly=${KEEP_YEARS}");
 		KEEP_INFO="${KEEP_INFO}, yearly: ${KEEP_YEARS}";
 	fi;
-	if [ ! -z "${KEEP_WITHIN}" ]; then
+	if [ -n "${KEEP_WITHIN}" ]; then
 		# check for invalid string. can only be number + H|d|w|m|y
 		if [[ "${KEEP_WITHIN}" =~ ^[0-9]+[Hdwmy]{1}$ ]]; then
 			KEEP_OPTIONS+=("--keep-within=${KEEP_WITHIN}");
@@ -244,7 +247,7 @@ fi;
 if [ -f "${BASE_FOLDER}${BACKUP_LOCK_FILE}" ]; then
 	LOCK_PID=$(cat "${BASE_FOLDER}${BACKUP_LOCK_FILE}" 2>/dev/null);
 	# check if lock file pid has an active program attached to it
-	if [ -f /proc/${LOCK_PID}/cmdline ]; then
+	if [ -f "/proc/${LOCK_PID}/cmdline" ]; then
 		echo "Script is already running on PID: ${$}";
 		. "${DIR}/borg.backup.functions.close.sh" 1;
 		exit 1;
@@ -272,11 +275,11 @@ _BORG_PRUNE="${BORG_COMMAND} prune ${OPT_REMOTE} -v --list ${OPT_PROGRESS} ${DRY
 # set base path to config directory to keep cache/config separated
 export BORG_BASE_DIR="${BASE_FOLDER}";
 # ignore non encrypted access
-export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=${_BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK};
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK="${_BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK}";
 # ignore moved repo access
-export BORG_RELOCATED_REPO_ACCESS_IS_OK=${_BORG_RELOCATED_REPO_ACCESS_IS_OK};
+export BORG_RELOCATED_REPO_ACCESS_IS_OK="${_BORG_RELOCATED_REPO_ACCESS_IS_OK}";
 # and for debug print that tout
-if [ ${DEBUG} -eq 1 ]; then
+if [ "${DEBUG}" -eq 1 ]; then
 	echo "export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=${_BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK};";
 	echo "export BORG_RELOCATED_REPO_ACCESS_IS_OK=${_BORG_RELOCATED_REPO_ACCESS_IS_OK};";
 	echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";";
@@ -288,10 +291,10 @@ COMMAND_INFO="${COMMAND_EXPORT}${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}"
 # if this is user@host, we need to use ssh command to verify if the file is there
 # else a normal verify is ok
 # unless explicit given, verify is skipped
-if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ]; then
+if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "VERIFY" "$(date +'%F %T')" "${MODULE}";
-	if [ ! -z "${TARGET_SERVER}" ]; then
-		if [ ${DEBUG} -eq 1 ]; then
+	if [ -n "${TARGET_SERVER}" ]; then
+		if [ "${DEBUG}" -eq 1 ]; then
 			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
 		fi;
 		# use borg info and verify if it returns "Repository ID:" in the first line
@@ -305,19 +308,19 @@ if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ]; then
 		INIT_REPOSITORY=1;
 	fi;
 	# if verrify but no init and repo is there but init file is missing set it
-	if [ ${VERIFY} -eq 1 ] && [ ${INIT} -eq 0 ] && [ ${INIT_REPOSITORY} -eq 0 ] &&
+	if [ "${VERIFY}" -eq 1 ] && [ "${INIT}" -eq 0 ] && [ "${INIT_REPOSITORY}" -eq 0 ] &&
 		[ ! -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
 		# write init file
 		echo "[!] Add missing init verify file";
-		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_FILE}";
+		date +%s > "${BASE_FOLDER}${BACKUP_INIT_FILE}";
 	fi;
 	# end if verified but repository is not here
-	if [ ${VERIFY} -eq 1 ] && [ ${INIT} -eq 0 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
+	if [ "${VERIFY}" -eq 1 ] && [ "${INIT}" -eq 0 ] && [ "${INIT_REPOSITORY}" -eq 1 ]; then
 		echo "[! $(date +'%F %T')] No repository. Please run with -I flag to initialze repository";
 		. "${DIR}/borg.backup.functions.close.sh" 1;
 		exit 1;
 	fi;
-	if [ ${EXIT} -eq 1 ] && [ ${VERIFY} -eq 1 ] && [ ${INIT} -eq 0 ]; then
+	if [ "${EXIT}" -eq 1 ] && [ "${VERIFY}" -eq 1 ] && [ "${INIT}" -eq 0 ]; then
 		echo "Repository exists";
 		echo "For more information run:"
 		echo "${COMMAND_INFO}";
@@ -325,16 +328,30 @@ if [ ${VERIFY} -eq 1 ] || [ ${INIT} -eq 1 ]; then
 		exit;
 	fi;
 fi;
-if [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
+# MARK: INIT
+if [ "${INIT}" -eq 1 ] && [ "${INIT_REPOSITORY}" -eq 1 ]; then
+
 	printf "${PRINTF_SUB_BLOCK}" "INIT" "$(date +'%F %T')" "${MODULE}";
-	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
+	if [ "${DEBUG}" -eq 1 ] || [ "${DRYRUN}" -eq 1 ]; then
 		echo "${BORG_COMMAND} init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY}";
+		echo "${BORG_COMMAND} key export ${REPOSITORY}";
+		echo "${BORG_COMMAND} key export --paper ${REPOSITORY}";
 	fi
-	if [ ${DRYRUN} -eq 0 ]; then
+	if [ "${DRYRUN}" -eq 0 ]; then
 		# should trap and exit properly here
 		${BORG_COMMAND} init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY};
+		# show the key file
+		if [ "${ENCRYPTION}" = "keyfile" ]; then
+			echo "--- [ENCRYPTION KEY] --[START]-------------------------------------------------->";
+			echo "Store the key and password in a safe place";
+			echo "----[BORG KEY] -------------------------------->";
+			${BORG_COMMAND} key export "${REPOSITORY}";
+			echo "----[BORG KEY:paper] -------------------------->";
+			${BORG_COMMAND} key export --paper "${REPOSITORY}";
+			echo "--- [ENCRYPTION KEY] --[END  ]-------------------------------------------------->";
+		fi;
 		# write init file
-		echo "$(date +%s)" > "${BASE_FOLDER}${BACKUP_INIT_FILE}";
+		date +%s > "${BASE_FOLDER}${BACKUP_INIT_FILE}";
 		echo "Repository initialized";
 		echo "For more information run:"
 		echo "${COMMAND_INFO}";
@@ -342,7 +359,7 @@ if [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 1 ]; then
 	. "${DIR}/borg.backup.functions.close.sh";
 	# exit after init
 	exit;
-elif [ ${INIT} -eq 1 ] && [ ${INIT_REPOSITORY} -eq 0 ]; then
+elif [ "${INIT}" -eq 1 ] && [ "${INIT_REPOSITORY}" -eq 0 ]; then
 	echo "[! $(date +'%F %T')] Repository already initialized";
 	echo "For more information run:"
 	echo "${COMMAND_INFO}";
@@ -359,18 +376,18 @@ if [ ! -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
 fi;
 
 # PRINT OUT current data, only do this if REPO exists
-if [ ${PRINT} -eq 1 ]; then
+if [ "${PRINT}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "PRINT" "$(date +'%F %T')" "${MODULE}";
 	FORMAT="{archive:<45} {comment:6} {start} - {end} [{id}] ({username}@{hostname}){NL}"
 	# show command on debug or dry run
-	if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
+	if [ "${DEBUG}" -eq 1 ] || [ "${DRYRUN}" -eq 1 ]; then
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} list ${OPT_REMOTE} --format ${FORMAT} ${REPOSITORY}";
 	fi;
 	# run info command if not a dry drun
-	if [ ${DRYRUN} -eq 0 ]; then
-		${BORG_COMMAND} list ${OPT_REMOTE} --format "${FORMAT}" ${REPOSITORY} ;
+	if [ "${DRYRUN}" -eq 0 ]; then
+		${BORG_COMMAND} list ${OPT_REMOTE} --format "${FORMAT}" "${REPOSITORY}" ;
 	fi;
-	if [ ${VERBOSE} -eq 1 ]; then
+	if [ "${VERBOSE}" -eq 1 ]; then
 		echo "";
 		echo "Base command info:"
 		echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";${BORG_COMMAND} [COMMAND] ${OPT_REMOTE} ${REPOSITORY}::[BACKUP] [PATH]";
@@ -389,21 +406,21 @@ if [ ${PRINT} -eq 1 ]; then
 fi;
 
 # run borg compact command and exit
-if [ ${COMPACT} -eq 1 ]; then
+if [ "${COMPACT}" -eq 1 ]; then
 	. "${DIR}/borg.backup.functions.compact.sh";
 	. "${DIR}/borg.backup.functions.close.sh";
 	exit;
 fi;
 
 # run borg check command and exit
-if [ ${CHECK} -eq 1 ]; then
+if [ "${CHECK}" -eq 1 ]; then
 	. "${DIR}/borg.backup.functions.check.sh";
 	. "${DIR}/borg.backup.functions.close.sh";
 	exit;
 fi;
 
 # DELETE ONE TIME TAG
-if [ ! -z "${DELETE_ONE_TIME_TAG}" ]; then
+if [ -n "${DELETE_ONE_TIME_TAG}" ]; then
 	printf "${PRINTF_SUB_BLOCK}" "DELETE" "$(date +'%F %T')" "${MODULE}";
 	# if a "*" is inside we don't do ONE archive, but globbing via -a option
 	DELETE_ARCHIVE=""
@@ -415,12 +432,12 @@ if [ ! -z "${DELETE_ONE_TIME_TAG}" ]; then
 		DELETE_ARCHIVE="::"${DELETE_ONE_TIME_TAG};
 	fi
 	# if this is borg <1.2 OPT_LIST does not work
-	if [ $(version $BORG_VERSION) -lt $(version "1.2.0") ]; then
+	if [ "$(version "$BORG_VERSION")" -lt "$(version "1.2.0")" ]; then
 		OPT_LIST="";
 	fi;
 	# if exists, delete and exit
 	# show command on debug or dry run
-	if [ ${DEBUG} -eq 1 ]; then
+	if [ "${DEBUG}" -eq 1 ]; then
 		echo "${BORG_COMMAND} delete ${OPT_REMOTE} ${OPT_LIST} -s ${OPT_GLOB} ${REPOSITORY}${DELETE_ARCHIVE}";
 	fi;
 	# run delete command if not a dry drun
@@ -432,11 +449,11 @@ if [ ! -z "${DELETE_ONE_TIME_TAG}" ]; then
 	fi;
 	# if not a dry run, compact repository after delete
 	# not that compact only works on borg 1.2
-	if [ $(version $BORG_VERSION) -ge $(version "1.2.0") ]; then
-		if [ ${DRYRUN} -eq 0 ]; then
-			${BORG_COMMAND} compact ${OPT_REMOTE} ${REPOSITORY};
+	if [ "$(version "$BORG_VERSION")" -ge "$(version "1.2.0")" ]; then
+		if [ "${DRYRUN}" -eq 0 ]; then
+			${BORG_COMMAND} compact ${OPT_REMOTE} "${REPOSITORY}";
 		fi;
-		if [ ${DEBUG} -eq 1 ]; then
+		if [ "${DEBUG}" -eq 1 ]; then
 			echo "${BORG_COMMAND} compact ${OPT_REMOTE} ${REPOSITORY}";
 		fi;
 	fi;

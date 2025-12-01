@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 # Backup zabbix config and settings only
 
 MODULE="zabbix"
@@ -26,7 +29,7 @@ BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
 if [ -z "${ZABBIX_DUMP_BIN}" ]; then
 	ZABBIX_DUMP_BIN="/usr/local/bin/zabbix-dump";
 fi;
-if [ ! -z "${ZABBIX_CONFIG}" ] && [ ! -f "${ZABBIX_CONFIG}" ]; then
+if [ -n "${ZABBIX_CONFIG}" ] && [ ! -f "${ZABBIX_CONFIG}" ]; then
 	echo "[! $(date +'%F %T')] Cannot find zabbix config: ${ZABBIX_CONFIG}";
 	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
