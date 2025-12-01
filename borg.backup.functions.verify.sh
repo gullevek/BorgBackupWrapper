@@ -291,6 +291,7 @@ COMMAND_INFO="${COMMAND_EXPORT}${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}"
 # if this is user@host, we need to use ssh command to verify if the file is there
 # else a normal verify is ok
 # unless explicit given, verify is skipped
+# MARK: VERIFY / INFO
 if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "VERIFY" "$(date +'%F %T')" "${MODULE}";
 	if [ -n "${TARGET_SERVER}" ]; then
@@ -298,7 +299,7 @@ if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
 		fi;
 		# use borg info and verify if it returns "Repository ID:" in the first line
-		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep "Repository ID:");
+		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}" 2>&1|grep "Repository ID:");
 		# this is currently a hack to work round the error code in borg info
 		# this checks if REPO_VERIFY holds this error message and then starts init
 		if [[ -z "${REPO_VERIFY}" ]] || [[ "${REPO_VERIFY}" =~ ${REGEX_ERROR} ]]; then
@@ -339,11 +340,12 @@ if [ "${INIT}" -eq 1 ] && [ "${INIT_REPOSITORY}" -eq 1 ]; then
 	fi
 	if [ "${DRYRUN}" -eq 0 ]; then
 		# should trap and exit properly here
-		${BORG_COMMAND} init ${OPT_REMOTE} -e ${ENCRYPTION} ${OPT_VERBOSE} ${REPOSITORY};
+		${BORG_COMMAND} init ${OPT_REMOTE} -e "${ENCRYPTION}" ${OPT_VERBOSE} "${REPOSITORY}";
 		# show the key file
 		if [ "${ENCRYPTION}" = "keyfile" ]; then
 			echo "--- [ENCRYPTION KEY] --[START]-------------------------------------------------->";
 			echo "Store the key and password in a safe place";
+			echo "export BORG_BASE_DIR=\"${BASE_FOLDER}\";borg key export [--paper] ${REPOSITORY}";
 			echo "----[BORG KEY] -------------------------------->";
 			${BORG_COMMAND} key export "${REPOSITORY}";
 			echo "----[BORG KEY:paper] -------------------------->";
@@ -375,6 +377,7 @@ if [ ! -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
 	exit 1;
 fi;
 
+# MARK: LIST / PRINT
 # PRINT OUT current data, only do this if REPO exists
 if [ "${PRINT}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "PRINT" "$(date +'%F %T')" "${MODULE}";

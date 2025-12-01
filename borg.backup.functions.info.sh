@@ -17,6 +17,11 @@ if [ "${INFO}" -eq 1 ]; then
 	# run info command if not a dry drun
 	if [ "${DRYRUN}" -eq 0 ]; then
 		${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}";
+		if [ "${VERBOSE}" -eq 1 ]; then
+			# print key information
+			echo "------------------------------------------------------------------------------";
+			${BORG_COMMAND} key export "${REPOSITORY}";
+		fi;
 	fi;
 	if [ "${MODULE}" = "files" ]; then
 		if [ "${FOLDER_OK}" -eq 1 ]; then
