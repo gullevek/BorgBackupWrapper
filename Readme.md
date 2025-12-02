@@ -141,7 +141,7 @@ All below have default values if not set in the main settings file
 
 * COMPRESSION: zstd
 * COMPRESSION_LEVEL: 3
-* ENCRYPTION: none
+* ENCRYPTION: keyfile (with no password)
 * FORCE_VERIFY: false
 * COMPACT_INTERVAL: 1
 * CHECK_INTERVAL: none
