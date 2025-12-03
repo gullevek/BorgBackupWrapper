@@ -177,7 +177,7 @@ else
 	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 
 	# get list of tables
-	for owner_db in $(${PG_PSQL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -d template1 -t -A -F "," -X -q -c "SELECT pg_catalog.pg_get_userbyid(datdba) AS owner, datname, pg_catalog.pg_encoding_to_char(encoding) AS encoding FROM pg_catalog.pg_database WHERE datname ~ 'template(0|1)' ORDER BY datname;"); do
+	for owner_db in $(${PG_PSQL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -d template1 -t -A -F "," -X -q -c "SELECT pg_catalog.pg_get_userbyid(datdba) AS owner, datname, pg_catalog.pg_encoding_to_char(encoding) AS encoding FROM pg_catalog.pg_database WHERE datname !~ 'template(0|1)' ORDER BY datname;"); do
 		LOCAL_START=$(date +'%s');
 		# get the user who owns the DB too
 		owner=$(echo "${owner_db}" | cut -d "," -f 1);
