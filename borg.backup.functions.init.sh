@@ -6,8 +6,8 @@ if [ -z "${MODULE}" ]; then
 fi;
 
 set -ETu #-e -o pipefail
-trap cleanup SIGINT SIGTERM ERR
 trap error_trap ERR
+trap cleanup SIGINT SIGTERM
 
 cleanup() {
 	# script cleanup here
