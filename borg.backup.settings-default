@@ -13,7 +13,7 @@ TARGET_PORT="";
 TARGET_BORG_PATH="";
 # folder where the backup folder will be created
 TARGET_FOLDER="";
-# the backup file (folder) for this host $(hostname), must end with .borg
+# the backup file (folder) for this backup, avoid dynamic variables in here, must end with .borg
 BACKUP_FILE="";
 # compression settings (none, lz4, zstd, zlib, lzma)
 # empty is default zstd
