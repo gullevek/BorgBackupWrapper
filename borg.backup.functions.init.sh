@@ -32,7 +32,7 @@ function version {
 }
 
 # version for all general files
-VERSION="4.5.4";
+VERSION="4.7.2";
 
 # borg version and borg comamnd
 BORG_VERSION="";
