@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# allow variables in printf format string
+# shellcheck disable=SC2059
+
 # Backup PostgreSQL
 # default is per table dump, can be set to one full dump
 # config override set in borg.backup.pgsql.settings
@@ -32,7 +35,7 @@ BACKUP_LOCK_FILE="borg.backup.${MODULE}.lock";
 # if info print info and then abort run
 . "${DIR}/borg.backup.functions.info.sh";
 
-if [ ! -z "${DATABASE_USER}" ]; then
+if [ -n "${DATABASE_USER}" ]; then
 	DB_USER=${DATABASE_USER};
 else
 	DB_USER='postgres';
@@ -95,7 +98,7 @@ CONN_DB_HOST=''; # -h <host>
 CONN_DB_PORT=''; # -p <port>
 
 # ALL IN ONE FILE or PER DATABASE FLAG
-if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
+if [ -n "${DATABASE_FULL_DUMP}" ]; then
 	SCHEMA_ONLY='';
 	schema_flag='data';
 	if [ "${DATABASE_FULL_DUMP}" = "schema" ]; then
@@ -120,7 +123,7 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		fi;
 	fi;
 	if [ ${DRYRUN} -eq 0 ]; then
-		$(${PG_DUMPALL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} ${SCHEMA_ONLY} -c | ${BORG_CALL});
+		${PG_DUMPALL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} ${SCHEMA_ONLY} -c | ${BORG_CALL};
 		_backup_error=$?;
 		if [ $_backup_error -ne 0 ]; then
 			echo "[! $(date +'%F %T')] Backup creation failed for full dump with error code: ${_backup_error}";
@@ -133,7 +136,7 @@ if [ ! -z "${DATABASE_FULL_DUMP}" ]; then
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
-	DURATION=$[ $(date +'%s')-$LOCAL_START ];
+	DURATION=$(( $(date +'%s') - LOCAL_START ));
 	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "all databases" "${MODULE}" "$(convert_time ${DURATION})";
 else
 	# dump globals first
@@ -170,21 +173,21 @@ else
 		echo "Prune repository with keep${KEEP_INFO:1}";
 		${BORG_PRUNE};
 	fi;
-	DURATION=$[ $(date +'%s')-$LOCAL_START ];
+	DURATION=$(( $(date +'%s') - LOCAL_START ));
 	printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 
 	# get list of tables
-	for owner_db in $(${PG_PSQL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -d template1 -t -A -F "," -X -q -c "SELECT pg_catalog.pg_get_userbyid(datdba) AS owner, datname, pg_catalog.pg_encoding_to_char(encoding) AS encoding FROM pg_catalog.pg_database WHERE datname "\!"~ 'template(0|1)' ORDER BY datname;"); do
+	for owner_db in $(${PG_PSQL} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -d template1 -t -A -F "," -X -q -c "SELECT pg_catalog.pg_get_userbyid(datdba) AS owner, datname, pg_catalog.pg_encoding_to_char(encoding) AS encoding FROM pg_catalog.pg_database WHERE datname ~ 'template(0|1)' ORDER BY datname;"); do
 		LOCAL_START=$(date +'%s');
 		# get the user who owns the DB too
-		owner=$(echo ${owner_db} | cut -d "," -f 1);
-		db=$(echo ${owner_db} | cut -d "," -f 2);
-		encoding=$(echo ${owner_db} | cut -d "," -f 3);
+		owner=$(echo "${owner_db}" | cut -d "," -f 1);
+		db=$(echo "${owner_db}" | cut -d "," -f 2);
+		encoding=$(echo "${owner_db}" | cut -d "," -f 3);
 		printf "${PRINTF_DB_SUB_BLOCK}" "DB" "${db}" "${MODULE}";
 		printf "${PRINTF_SUBEXT_BLOCK}" "BACKUP" "${db}" "$(date +'%F %T')" "${MODULE}";
 		include=0;
 		if [ -s "${BASE_FOLDER}${INCLUDE_FILE}" ]; then
-			while read incl_db; do
+			while read -r incl_db; do
 				if [ "${db}" = "${incl_db}" ]; then
 					include=1;
 					break;
@@ -195,7 +198,7 @@ else
 		fi;
 		exclude=0;
 		if [ -f "${BASE_FOLDER}${EXCLUDE_FILE}" ]; then
-			while read excl_db; do
+			while read -r excl_db; do
 				if [ "${db}" = "${excl_db}" ]; then
 					exclude=1;
 					break;
@@ -211,7 +214,7 @@ else
 				# default is data dump
 				SCHEMA_ONLY='';
 				schema_flag='data';
-				while read schema_db; do
+				while read -r schema_db; do
 					if [ "${db}" = "${schema_db}" ]; then
 						SCHEMA_ONLY='-s';
 						schema_flag='schema';
@@ -223,7 +226,7 @@ else
 				# default to schema, unless in data list
 				SCHEMA_ONLY='-s';
 				schema_flag='schema';
-				while read data_db; do
+				while read -r data_db; do
 					if [ "${db}" = "${data_db}" ]; then
 						SCHEMA_ONLY='';
 						schema_flag='data';
@@ -256,7 +259,7 @@ else
 				fi;
 			fi;
 			if [ ${DRYRUN} -eq 0 ]; then
-				${PG_DUMP} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -c ${SCHEMA_ONLY} --format=c ${db} | ${BORG_CALL};
+				${PG_DUMP} -U ${DB_USER} ${CONN_DB_HOST} ${CONN_DB_PORT} -c ${SCHEMA_ONLY} --format=c "${db}" | ${BORG_CALL};
 				_backup_error=$?;
 				if [ $_backup_error -ne 0 ]; then
 					echo "[! $(date +'%F %T')] Backup creation failed for ${db} dump with error code: ${_backup_error}";
@@ -272,7 +275,7 @@ else
 		else
 			echo "- [E] ${db}";
 		fi;
-		DURATION=$[ $(date +'%s')-$LOCAL_START ];
+		DURATION=$(( $(date +'%s') - LOCAL_START ));
 		printf "${PRINTF_DB_RUN_TIME_SUB_BLOCK}" "DONE" "${db}" "${MODULE}" "$(convert_time ${DURATION})";
 	done;
 fi;

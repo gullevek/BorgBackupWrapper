@@ -5,6 +5,9 @@ if [ -z "${MODULE}" ]; then
 	exit 1;
 fi;
 
+# E: inherit trap ERR
+# T: DEBUG and RETURN traps are inherited
+# u: unset variables ere error
 set -ETu #-e -o pipefail
 trap _catch ERR
 trap _cleanup SIGINT SIGTERM
@@ -18,9 +21,8 @@ _cleanup() {
 	trap - SIGINT SIGTERM
 }
 _catch() {
-	echo "Some part of the script failed with ERROR: $? @COMMAND: '$BASH_COMMAND' @LINE: $(caller)" >&2;
-	# exit caller so we do not catch the same error again
-	exit 0;
+	local last_exit_code=$?;
+	echo "Some part of the script failed with ERROR: $last_exit_code @COMMAND: '$BASH_COMMAND' @LINE: $(caller)" >&2;
 }
 # on exit unset any exported var
 trap "unset BORG_BASE_DIR BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK BORG_RELOCATED_REPO_ACCESS_IS_OK" EXIT;
@@ -91,7 +93,7 @@ REGEX="";
 REGEX_COMMENT="^[\ \t]*#";
 REGEX_GLOB='\*';
 REGEX_NUMERIC="^[0-9]{1,2}$";
-REGEX_ERROR="^Some part of the script failed with an error:";
+REGEX_ERROR="^Some part of the script failed with ERROR:";
 PRUNE_DEBUG="";
 INIT_REPOSITORY=0;
 FOLDER_OK=0;
