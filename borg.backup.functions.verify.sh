@@ -300,7 +300,8 @@ if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 		fi;
 		# use borg info and verify if it returns "Repository ID:" in the first line
 		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}" 2>&1);
-		if [ ! $? ]; then
+		__LAST_ERROR=$?
+		if [ $__LAST_ERROR -ne 0 ]; then
 			echo "[!] Repository verify error: ${REPO_VERIFY}";
 			REPO_VERIFY="";
 		else
