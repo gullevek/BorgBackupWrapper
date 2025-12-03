@@ -296,11 +296,11 @@ if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "VERIFY" "$(date +'%F %T')" "${MODULE}";
 	if [ -n "${TARGET_SERVER}" ]; then
 		if [ "${DEBUG}" -eq 1 ]; then
-			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
+			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1";
 		fi;
 		# use borg info and verify if it returns "Repository ID:" in the first line
 		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}" 2>&1);
-		if ! $?; then
+		if [ ! $? ]; then
 			echo "[!] Repository verify error: ${REPO_VERIFY}";
 			REPO_VERIFY="";
 		else
