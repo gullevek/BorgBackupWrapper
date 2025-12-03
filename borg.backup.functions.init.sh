@@ -6,10 +6,10 @@ if [ -z "${MODULE}" ]; then
 fi;
 
 set -ETu #-e -o pipefail
-trap error_trap ERR
-trap cleanup SIGINT SIGTERM
+trap _catch ERR
+trap _cleanup SIGINT SIGTERM
 
-cleanup() {
+_cleanup() {
 	# script cleanup here
 	echo "Script abort: $? @LINE: $(caller)";
 	# unset exported vars
@@ -17,8 +17,8 @@ cleanup() {
 	# end trap
 	trap - SIGINT SIGTERM
 }
-error_trap() {
-	echo "Some part of the script failed with an error: $? @COMMAND: '$BASH_COMMAND' @LINE: $(caller)";
+_catch() {
+	echo "Some part of the script failed with ERROR: $? @COMMAND: '$BASH_COMMAND' @LINE: $(caller)" >&2;
 	# exit caller so we do not catch the same error again
 	exit 0;
 }
