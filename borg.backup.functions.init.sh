@@ -7,14 +7,19 @@ fi;
 
 set -ETu #-e -o pipefail
 trap cleanup SIGINT SIGTERM ERR
+trap error_trap ERR
 
 cleanup() {
 	# script cleanup here
-	echo "Some part of the script failed with an error: $? @LINE: $(caller)";
+	echo "Script abort: $? @LINE: $(caller)";
 	# unset exported vars
 	unset BORG_BASE_DIR BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK BORG_RELOCATED_REPO_ACCESS_IS_OK;
 	# end trap
-	trap - SIGINT SIGTERM ERR
+	trap - SIGINT SIGTERM
+}
+error_trap() {
+	echo "Some part of the script failed with an error: $? @LINE: $(caller)";
+	trap - ERR
 }
 # on exit unset any exported var
 trap "unset BORG_BASE_DIR BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK BORG_RELOCATED_REPO_ACCESS_IS_OK" EXIT;
@@ -348,7 +353,7 @@ if [ -n "${ONE_TIME_TAG}" ] && ! [[ "${ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+$ ]]; th
 	echo "One time tag '${ONE_TIME_TAG}' must be alphanumeric with dashes and underscore only.";
 	exit 1;
 elif [ -n "${ONE_TIME_TAG}" ]; then
-	# all ok, attach . at the end
+	# all ok, attach '.' at the end
 	ONE_TIME_TAG=${ONE_TIME_TAG}".";
 fi;
 # if -D, cannot be with -T, -i, -C, -I, -P
@@ -359,7 +364,7 @@ fi;
 # -D also must be in valid backup set format
 # ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]
 if [ -n "${DELETE_ONE_TIME_TAG}" ] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},([A-Za-z0-9_-]+-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] && ! [[ "${DELETE_ONE_TIME_TAG}" =~ ^[A-Za-z0-9_-]+\.${MODULE},(\*-)?[0-9]{4}-[0-9]{2}-[0-9]{2}T\*$ ]]; then
-	echo "Delete one time tag '${DELETE_ONE_TIME_TAG}' is in an invalid format. "
+	echo "Delete one time tag '${DELETE_ONE_TIME_TAG}' is in an invalid format."
 	echo "Please verify existing tags with -P option."
 	echo "For a globing be sure it is in the format of: TAG.MODULE,*-YYYY-MM-DDT*";
 	echo "Note the dash (-) after the first *, also time (T) is a globa (*) must."

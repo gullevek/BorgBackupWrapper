@@ -299,7 +299,14 @@ if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
 		fi;
 		# use borg info and verify if it returns "Repository ID:" in the first line
-		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}" 2>&1|grep "Repository ID:");
+		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}" 2>&1);
+		if ! $?; then
+			echo "[!] Repository verify error: ${REPO_VERIFY}";
+			REPO_VERIFY="";
+		else
+			REPO_VERIFY=$(echo "${REPO_VERIFY}" |  grep "Repository ID:");
+		fi;
+		#  | grep "Repository ID:"
 		# this is currently a hack to work round the error code in borg info
 		# this checks if REPO_VERIFY holds this error message and then starts init
 		if [[ -z "${REPO_VERIFY}" ]] || [[ "${REPO_VERIFY}" =~ ${REGEX_ERROR} ]]; then
