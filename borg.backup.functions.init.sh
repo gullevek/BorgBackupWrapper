@@ -18,8 +18,9 @@ cleanup() {
 	trap - SIGINT SIGTERM
 }
 error_trap() {
-	echo "Some part of the script failed with an error: $? @LINE: $(caller)";
-	trap - ERR
+	echo "Some part of the script failed with an error: $? @COMMAND: '$BASH_COMMAND' @LINE: $(caller)";
+	# exit caller so we do not catch the same error again
+	exit 0;
 }
 # on exit unset any exported var
 trap "unset BORG_BASE_DIR BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK BORG_RELOCATED_REPO_ACCESS_IS_OK" EXIT;
