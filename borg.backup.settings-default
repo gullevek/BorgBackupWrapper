@@ -13,21 +13,19 @@ TARGET_PORT="";
 TARGET_BORG_PATH="";
 # folder where the backup folder will be created
 TARGET_FOLDER="";
-# the backup file (folder) for this host $(hostname), must end with .borg
+# the backup file (folder) for this backup, avoid dynamic variables in here, must end with .borg
 BACKUP_FILE="";
-# compression settings (empty for none, lz4, zstd, zlib, lzma)
-# level, if empty then default, else number between 0 and 9, or 1 to 22 for zstd
-# default is zstd, 3
+# compression settings (none, lz4, zstd, zlib, lzma)
+# empty is default zstd
 COMPRESSION="";
+# compression level, if empty then default 3, else number between 0 and 9, or 1 to 22 for zstd
 COMPRESSION_LEVEL="";
 # encryption settings:
 # SHA-256: 'none', 'authenticated', 'repokey', 'keyfile'
 # BLAKE2b: 'authenticated-blake2', 'repokey-blake2', 'keyfile-blake2'
-# Note: none does not encrypt
-# Blank passwords allowed for only key (if used, use keyfile)
+# Note: none does not encrypt and is not recommended
 # Default is keyfile
-# passwords have to be set via BORG_PASSPHRASE or BORG_PASSCOMMAND
-# keyfile can have blank passwords
+# Blank passwords allowed for only keyfile, else passwords have to be set via BORG_PASSPHRASE or BORG_PASSCOMMAND
 # See: http://borgbackup.readthedocs.io/en/stable/faq.html#how-can-i-specify-the-encryption-passphrase-programmatically
 ENCRYPTION=""
 # force repository verify, default is off, set to true for verify on every run

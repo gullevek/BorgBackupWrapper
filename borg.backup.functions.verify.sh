@@ -294,18 +294,15 @@ COMMAND_INFO="${COMMAND_EXPORT}${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY}"
 # MARK: VERIFY / INFO
 if [ "${VERIFY}" -eq 1 ] || [ "${INIT}" -eq 1 ]; then
 	printf "${PRINTF_SUB_BLOCK}" "VERIFY" "$(date +'%F %T')" "${MODULE}";
-	if [ -n "${TARGET_SERVER}" ]; then
-		if [ "${DEBUG}" -eq 1 ]; then
-			echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1|grep \"Repository ID:\"";
-		fi;
-		# use borg info and verify if it returns "Repository ID:" in the first line
-		REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}" 2>&1|grep "Repository ID:");
-		# this is currently a hack to work round the error code in borg info
-		# this checks if REPO_VERIFY holds this error message and then starts init
-		if [[ -z "${REPO_VERIFY}" ]] || [[ "${REPO_VERIFY}" =~ ${REGEX_ERROR} ]]; then
-			INIT_REPOSITORY=1;
-		fi;
-	elif [ ! -d "${REPOSITORY}" ]; then
+	if [ "${DEBUG}" -eq 1 ]; then
+		echo "${BORG_COMMAND} info ${OPT_REMOTE} ${REPOSITORY} 2>&1	";
+	fi;
+	# use borg info and verify if it returns "Repository ID:" in the first line
+	REPO_VERIFY=$(${BORG_COMMAND} info ${OPT_REMOTE} "${REPOSITORY}" 2>&1);
+	__last_error=$?;
+	# on any error in verify command force new INIT
+	if [[ $__last_error -ne 0 ]]; then
+		echo "[!] Repository verify error: ${REPO_VERIFY}";
 		INIT_REPOSITORY=1;
 	fi;
 	# if verrify but no init and repo is there but init file is missing set it
@@ -362,7 +359,7 @@ if [ "${INIT}" -eq 1 ] && [ "${INIT_REPOSITORY}" -eq 1 ]; then
 	# exit after init
 	exit;
 elif [ "${INIT}" -eq 1 ] && [ "${INIT_REPOSITORY}" -eq 0 ]; then
-	echo "[! $(date +'%F %T')] Repository already initialized";
+	echo "[!] ($(date +'%F %T')) Repository already initialized";
 	echo "For more information run:"
 	echo "${COMMAND_INFO}";
 	. "${DIR}/borg.backup.functions.close.sh" 1;
@@ -371,7 +368,7 @@ fi;
 
 # verify for init file
 if [ ! -f "${BASE_FOLDER}${BACKUP_INIT_FILE}" ]; then
-	echo "[! $(date +'%F %T')] It seems the repository has never been initialized."
+	echo "[!] ($(date +'%F %T')) It seems the repository has never been initialized."
 	echo "Please run -I to initialize or if already initialzed run with -C for init update."
 	. "${DIR}/borg.backup.functions.close.sh" 1;
 	exit 1;
