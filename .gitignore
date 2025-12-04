@@ -1,5 +1,6 @@
 .cache/
 .config/
+# various borg files that need to be ignored
 borg.backup.settings
 borg.backup.*.settings
 borg.backup.*.include
@@ -7,3 +8,4 @@ borg.backup.*.exclude
 borg.backup.*.schema-only
 borg.backup.*.init
 borg.backup.*.compact
+borg.backup.*.lock
