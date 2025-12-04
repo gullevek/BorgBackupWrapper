@@ -32,7 +32,7 @@ function version {
 }
 
 # version for all general files
-VERSION="4.7.2";
+VERSION="4.7.3";
 
 # borg version and borg comamnd
 BORG_VERSION="";
@@ -93,6 +93,8 @@ REGEX="";
 REGEX_COMMENT="^[\ \t]*#";
 REGEX_GLOB='\*';
 REGEX_NUMERIC="^[0-9]{1,2}$";
+# port regex, but only approximately
+REGEX_PORT="^[0-9]{2,5}$";
 REGEX_ERROR="^Some part of the script failed with ERROR:";
 PRUNE_DEBUG="";
 INIT_REPOSITORY=0;
@@ -156,6 +158,10 @@ SUB_BACKUP_SET="";
 # for database backup only
 DATABASE_FULL_DUMP="";
 DATABASE_USER="";
+DATABASE_USE_SUDO="";
+DATABASE_SUDO_USER="";
+DATABASE_PORT="";
+DATABASE_HOST="";
 # only for mysql old config file
 MYSQL_DB_CONFIG="";
 MYSQL_DB_CONFIG_PARAM="";

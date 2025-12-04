@@ -9,5 +9,15 @@
 # note that with this databases that have been dropped need to be pruned manually
 # if 'schema' word is used, only schema data is dumped
 DATABASE_FULL_DUMP="";
-# override default postgres user
+# override default postgres user and sudo user for all postgres commands
+# All commands must be run as the postgres admin user
 DATABASE_USER="";
+# disable sudo usage by setting to "0", default is to use sudo
+DATABASE_USE_SUDO="";
+# set the sudo user, if not set postgres or DATABASE_USER is used
+DATABASE_SUDO_USER="";
+# override port
+DATABASE_PORT="";
+# override database host, if set to local, localhost or 127.0.0.1 it will use sockets to connect
+# for socket connection ident or sudo has to be used
+DATABASE_HOST="";
