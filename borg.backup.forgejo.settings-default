@@ -1,0 +1,9 @@
+# Borg backup wrapper scripts settings: forgejo
+
+# rename to borg.backup.forgejo.settings to use
+
+FORGEJO_GIT_USER="";
+FORGEJO_WORKING_DIR="";
+FORGEJO_TEMP_DIR="";
+FORGEJO_BIN="";
+FORGEJO_CONFIG="";

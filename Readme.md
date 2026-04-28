@@ -254,22 +254,41 @@ backup.borg.mysql.schema-only
 
 ## gitea backup settings
 
-Note that the backup needs the GIT_USER set that runs gitea.
+Note that the backup needs the GITEA_GIT_USER set that runs gitea.
 This user is neede to create the temporary dump folder and access for the git files and database.
 
 ### gitea Config Variables
 
 | Variable | Default | Description |
 | - | - | - |
-| GIT_USER | git | The user that runs gitea |
+| GITEA_GIT_USER | git | The user that runs gitea |
 | GITEA_WORKING_DIR | /var/tmp/gitea/ | Where the temporary dump files from the backup are stored, as user git |
 | GITEA_TEMP_DIR | /var/tmp/ | General temporary folder |
 | GITEA_BIN | /usr/local/bin/gitea | Where the gitea binary is located |
-| GITEA_CONFIG | /etc/gitea/app.ini | The configuration file for gitea |
+| GITEA_CONFIG | /etc/gitea/app.ini or /var/lib/gitea/custom/conf/app.ini | The configuration file for gitea |
 
 ### gitea Control files
 
 There are no control files for gitea backup
+
+## forgejo backup settings
+
+Note that the backup needs the FORGEJO_GIT_USER set that runs forgejo.
+This user is neede to create the temporary dump folder and access for the git files and database.
+
+### forgejo Config Variables
+
+| Variable | Default | Description |
+| - | - | - |
+| FORGEJO_GIT_USER | git | The user that runs forgejo |
+| FORGEJO_WORKING_DIR | /var/tmp/forgejo/ | Where the temporary dump files from the backup are stored, as user git |
+| FORGEJO_TEMP_DIR | /var/tmp/ | General temporary folder |
+| FORGEJO_BIN | /usr/local/bin/forgejo | Where the forgejo binary is located |
+| FORGEJO_CONFIG | /etc/forgejo/app.ini or /var/lib/forgejo/custom/conf/app.ini | The configuration file for forgejo |
+
+### forgejo Control files
+
+There are no control files for forgejo backup
 
 ## zabbix config backup settings
 
