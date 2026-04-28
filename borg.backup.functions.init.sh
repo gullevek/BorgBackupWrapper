@@ -32,7 +32,7 @@ function version {
 }
 
 # version for all general files
-VERSION="4.8.0";
+VERSION="4.9.0";
 
 # borg version and borg comamnd
 BORG_VERSION="";
@@ -166,12 +166,19 @@ DATABASE_HOST="";
 MYSQL_DB_CONFIG="";
 MYSQL_DB_CONFIG_PARAM="";
 # gitea module
-GIT_USER="";
+GITEA_GIT_USER="";
 GITEA_WORKING_DIR="";
 GITEA_TEMP_DIR="";
 GITEA_BIN="";
 GITEA_CONFIG="";
 GITEA_EXPORT_TYPE="";
+# forgejo module
+FORGEJO_GIT_USER="";
+FORGEJO_WORKING_DIR="";
+FORGEJO_TEMP_DIR="";
+FORGEJO_BIN="";
+FORGEJO_CONFIG="";
+FORGEJO_EXPORT_TYPE="";
 # zabbix module
 ZABBIX_DUMP_BIN="";
 ZABBIX_CONFIG="";
