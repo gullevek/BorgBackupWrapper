@@ -308,7 +308,7 @@ The `zabbix-dump` dump script must be installed from: <https://github.com/gullev
 
 There are no control files for zabbix settings backup
 
-## packages backup
+## installed packages backup settings
 
 There are no settings to be configured.
 
