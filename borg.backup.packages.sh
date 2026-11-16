@@ -5,7 +5,7 @@
 # Dump installed packages list and backup them
 
 MODULE="packages"
-MODULE_VERSION="1.0.0";
+MODULE_VERSION="1.0.1";
 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
@@ -78,7 +78,11 @@ case "$FAMILY" in
         fi
 		if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
 			echo "dpkg --get-selections > $TMP_DIR/${FILENAME_ALL}";
-			echo "apt list --manual-installed | sort > $TMP_DIR/${FILENAME_MANUAL}";
+			echo "apt-mark showmanual | sort > $TMP_DIR/${FILENAME_MANUAL}";
+		fi;
+		if [ ${DRYRUN} -eq 0 ]; then
+			dpkg --get-selections > "$TMP_DIR"/"${FILENAME_ALL}";
+			apt-mark showmanual | sort > "$TMP_DIR"/"${FILENAME_MANUAL}";
 		fi;
 		;;
 	redhat)
@@ -91,7 +95,7 @@ case "$FAMILY" in
 			echo "rpm -qa --qf '%{NAME}.%{ARCH}\n' | sort > $TMP_DIR/${FILENAME_ALL}";
 		fi;
 		if [ ${DRYRUN} -eq 0 ]; then
-			rpm -qa --qf '%{NAME}.%{ARCH}\n' | sort > "$TMP_DIR"/${FILENAME_ALL};
+			rpm -qa --qf '%{NAME}.%{ARCH}\n' | sort > "$TMP_DIR"/"${FILENAME_ALL}";
 		fi;
         if has dnf; then
 			if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
@@ -99,7 +103,7 @@ case "$FAMILY" in
 			fi;
 			if [ ${DRYRUN} -eq 0 ]; then
 				dnf -q repoquery --userinstalled --qf '%{name}\n' 2>/dev/null \
-					| sort -u > "$TMP_DIR"/${FILENAME_MANUAL};
+					| sort -u > "$TMP_DIR"/"${FILENAME_MANUAL}";
 			fi;
         elif has yumdb; then
 			if [ ${DEBUG} -eq 1 ] || [ ${DRYRUN} -eq 1 ]; then
@@ -110,7 +114,7 @@ case "$FAMILY" in
 					| grep -v '^[[:space:]]' | grep -v '^$' \
 					| grep -v '^Loaded plugins' \
 					| sort -u \
-					| sort -u > "$TMP_DIR"/${FILENAME_MANUAL};
+					| sort -u > "$TMP_DIR"/"${FILENAME_MANUAL}";
 			fi;
         fi;
 		wait
