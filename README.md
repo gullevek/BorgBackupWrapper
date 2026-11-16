@@ -308,6 +308,12 @@ The `zabbix-dump` dump script must be installed from: <https://github.com/gullev
 
 There are no control files for zabbix settings backup
 
+## installed packages backup settings
+
+There are no settings to be configured.
+
+Work only with debian or reedhat base
+
 ## File connection
 
 Running any of the commands below
@@ -317,6 +323,7 @@ Running any of the commands below
 * borg.backup.mysql.sh
 * borg.backup.pgsql.sh
 * borg.backup.zabbix.sh
+* borg.backup.packages.sh
 
 1) Run `borg.backup.functions.init.sh` (always)
 2) Run `borg.backup.functions.verify.sh` (always)

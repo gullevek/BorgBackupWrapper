@@ -32,7 +32,7 @@ function version {
 }
 
 # version for all general files
-VERSION="4.9.0";
+VERSION="4.10.0";
 
 # borg version and borg comamnd
 BORG_VERSION="";
@@ -155,7 +155,7 @@ SUB_CHECK_INTERVAL="";
 # backup set names
 BACKUP_SET="";
 SUB_BACKUP_SET="";
-# for database backup only
+# for postgresql database backup only
 DATABASE_FULL_DUMP="";
 DATABASE_USER="";
 DATABASE_USE_SUDO="";

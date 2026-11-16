@@ -269,6 +269,7 @@ fi;
 # borg call, replace ##...## parts during run
 # used in all modules, except 'file'
 _BORG_CALL="${BORG_COMMAND} create ${OPT_REMOTE} -v ${OPT_LIST} ${OPT_PROGRESS} ${OPT_COMPRESSION} -s --stdin-name ##FILENAME## ${REPOSITORY}::##BACKUP_SET## -";
+_BORG_CALL_FILES="${BORG_COMMAND} create ${OPT_REMOTE} -v ${OPT_LIST} ${OPT_PROGRESS} ${OPT_COMPRESSION} -s ${REPOSITORY}::##BACKUP_SET## ";
 _BORG_PRUNE="${BORG_COMMAND} prune ${OPT_REMOTE} -v --list ${OPT_PROGRESS} ${DRY_RUN_STATS} -P ##BACKUP_SET_PREFIX## ${KEEP_OPTIONS[*]} ${REPOSITORY}";
 
 # general borg settings
